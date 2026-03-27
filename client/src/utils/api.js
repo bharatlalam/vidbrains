@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: "/api", timeout: 90000 });
+const api = axios.create({ 
+  baseURL: "https://vidbrain-server.onrender.com/api", 
+  timeout: 90000 
+});
 
 export async function analyzeVideo(url, language = "en") {
   const { data } = await api.post("/analyze", { url, language });
