@@ -56,60 +56,84 @@ async function analyzeVideo({ videoId, url, fullText, duration, metadata, langua
     ? fullText
     : `No metadata available. Infer topic from URL: ${url}`;
 
-  const prompt = `You are VidBrain AI. Analyze this YouTube video.
+  // Parse real duration from metadata if available
+  const videoDuration = metadata?.duration || null;
 
+  const prompt = `You are VidBrain AI. Analyze this YouTube video carefully and generate a precise, detailed analysis.
+
+VIDEO METADATA:
 ${videoContext}
+${videoDuration ? `Real video duration from YouTube API: ${videoDuration}` : ""}
 
 OUTPUT LANGUAGE: ${langName}
 Write ALL text fields in ${langName}. Keep JSON structure valid — no special characters that break JSON, no unescaped quotes inside strings.
 
+IMPORTANT RULES FOR CHAPTERS:
+- You MUST generate realistic timestamps based on the actual video duration
+- If the video is 20 minutes long, spread chapters across 0:00 to 20:00
+- If the video is 10 minutes long, spread chapters across 0:00 to 10:00
+- NEVER use "not available" for timestamps — always use mm:ss format like "0:00", "4:30", "9:15"
+- Calculate timestamps by dividing the video duration into 5 equal parts
+- First chapter is always "0:00"
+- Make chapter titles and descriptions specific to the actual video content
+
 Return ONLY a raw valid JSON object. No markdown. No backticks. No explanation. No trailing commas.
 
 {
-  "title": "video title in ${langName}",
-  "channel": "channel name",
-  "duration": "mm:ss",
-  "views": "14K views",
-  "year": "2024",
+  "title": "exact video title from metadata in ${langName}",
+  "channel": "exact channel name from metadata",
+  "duration": "exact duration in mm:ss format from metadata",
+  "views": "exact view count from metadata formatted like 14K views",
+  "year": "exact year from metadata",
   "thumbnail": "https://img.youtube.com/vi/${videoId}/mqdefault.jpg",
-  "summary": "Four sentences about this video in ${langName}.",
-  "keyPoints": ["point 1 in ${langName}", "point 2", "point 3", "point 4", "point 5"],
+  "summary": "Four detailed and specific sentences about what this video actually covers in ${langName}.",
+  "keyPoints": [
+    "specific insight 1 about this video in ${langName}",
+    "specific insight 2",
+    "specific insight 3",
+    "specific insight 4",
+    "specific insight 5"
+  ],
   "chapters": [
-    {"timestamp": "0:00", "title": "chapter in ${langName}", "description": "description"},
-    {"timestamp": "3:00", "title": "chapter", "description": "description"},
-    {"timestamp": "7:00", "title": "chapter", "description": "description"},
-    {"timestamp": "12:00", "title": "chapter", "description": "description"},
-    {"timestamp": "17:00", "title": "chapter", "description": "description"}
+    {"timestamp": "0:00", "title": "specific chapter title in ${langName}", "description": "specific description of what happens at this timestamp"},
+    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"},
+    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"},
+    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"},
+    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"}
   ],
   "qa": [
-    {"question": "question in ${langName}?", "answer": "answer in ${langName}."},
-    {"question": "question?", "answer": "answer."},
-    {"question": "question?", "answer": "answer."},
-    {"question": "question?", "answer": "answer."},
-    {"question": "question?", "answer": "answer."}
+    {"question": "specific question about this video in ${langName}?", "answer": "specific detailed answer in ${langName}."},
+    {"question": "specific question?", "answer": "specific answer."},
+    {"question": "specific question?", "answer": "specific answer."},
+    {"question": "specific question?", "answer": "specific answer."},
+    {"question": "specific question?", "answer": "specific answer."}
   ],
   "flashcards": [
-    {"term": "term in ${langName}", "definition": "definition."},
-    {"term": "term", "definition": "definition."},
-    {"term": "term", "definition": "definition."},
-    {"term": "term", "definition": "definition."},
-    {"term": "term", "definition": "definition."},
-    {"term": "term", "definition": "definition."},
-    {"term": "term", "definition": "definition."},
-    {"term": "term", "definition": "definition."}
+    {"term": "specific term from video in ${langName}", "definition": "precise definition in ${langName}."},
+    {"term": "specific term", "definition": "precise definition."},
+    {"term": "specific term", "definition": "precise definition."},
+    {"term": "specific term", "definition": "precise definition."},
+    {"term": "specific term", "definition": "precise definition."},
+    {"term": "specific term", "definition": "precise definition."},
+    {"term": "specific term", "definition": "precise definition."},
+    {"term": "specific term", "definition": "precise definition."}
   ],
   "mindmap": {
-    "center": "topic in ${langName}",
+    "center": "core topic of video in ${langName}",
     "branches": [
-      {"label": "branch 1", "children": ["sub1", "sub2", "sub3"]},
-      {"label": "branch 2", "children": ["sub1", "sub2", "sub3"]},
-      {"label": "branch 3", "children": ["sub1", "sub2"]},
-      {"label": "branch 4", "children": ["sub1", "sub2", "sub3"]},
-      {"label": "branch 5", "children": ["sub1", "sub2"]}
+      {"label": "specific branch 1 in ${langName}", "children": ["specific sub1", "specific sub2", "specific sub3"]},
+      {"label": "specific branch 2", "children": ["specific sub1", "specific sub2", "specific sub3"]},
+      {"label": "specific branch 3", "children": ["specific sub1", "specific sub2"]},
+      {"label": "specific branch 4", "children": ["specific sub1", "specific sub2", "specific sub3"]},
+      {"label": "specific branch 5", "children": ["specific sub1", "specific sub2"]}
     ]
   },
-  "suggestedQuestions": ["question 1 in ${langName}?", "question 2?", "question 3?"],
-  "context": "Detailed paragraph in ${langName} about the video."
+  "suggestedQuestions": [
+    "specific question about this video in ${langName}?",
+    "specific question?",
+    "specific question?"
+  ],
+  "context": "Detailed paragraph in ${langName} summarizing the full video content accurately."
 }`;
 
   const response = await client.chat.completions.create({
