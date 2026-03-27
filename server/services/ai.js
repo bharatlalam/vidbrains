@@ -32,7 +32,7 @@ async function safeParseJSON(raw, client) {
     console.warn("[ai] JSON parse failed, attempting repair...");
     const repair = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 3000,
+      max_tokens: 4096,
       temperature: 0,
       messages: [
         {
@@ -56,10 +56,9 @@ async function analyzeVideo({ videoId, url, fullText, duration, metadata, langua
     ? fullText
     : `No metadata available. Infer topic from URL: ${url}`;
 
-  // Parse real duration from metadata if available
   const videoDuration = metadata?.duration || null;
 
-  const prompt = `You are VidBrain AI. Analyze this YouTube video carefully and generate a precise, detailed analysis.
+  const prompt = `You are VidBrain AI. Analyze this YouTube video carefully and generate a rich, detailed, comprehensive analysis.
 
 VIDEO METADATA:
 ${videoContext}
@@ -68,55 +67,58 @@ ${videoDuration ? `Real video duration from YouTube API: ${videoDuration}` : ""}
 OUTPUT LANGUAGE: ${langName}
 Write ALL text fields in ${langName}. Keep JSON structure valid — no special characters that break JSON, no unescaped quotes inside strings.
 
-IMPORTANT RULES FOR CHAPTERS:
-- You MUST generate realistic timestamps based on the actual video duration
-- If the video is 20 minutes long, spread chapters across 0:00 to 20:00
-- If the video is 10 minutes long, spread chapters across 0:00 to 10:00
-- NEVER use "not available" for timestamps — always use mm:ss format like "0:00", "4:30", "9:15"
-- Calculate timestamps by dividing the video duration into 5 equal parts
-- First chapter is always "0:00"
-- Make chapter titles and descriptions specific to the actual video content
+IMPORTANT RULES:
+- Summary must be 6-8 detailed sentences covering the ENTIRE video — main topic, all key concepts, specific examples, who it is for, and what viewer will learn
+- Key points must be 7 detailed insights each with a full explanation not just a title
+- Q&A must have 7 questions with 3-4 sentence detailed answers each including examples
+- Chapters must have realistic timestamps based on actual video duration — NEVER use "not available"
+- Flashcards must have 8 specific terms with detailed definitions from the video
+- Everything must be specific to THIS video not generic
 
 Return ONLY a raw valid JSON object. No markdown. No backticks. No explanation. No trailing commas.
 
 {
   "title": "exact video title from metadata in ${langName}",
   "channel": "exact channel name from metadata",
-  "duration": "exact duration in mm:ss format from metadata",
-  "views": "exact view count from metadata formatted like 14K views",
-  "year": "exact year from metadata",
+  "duration": "exact duration in mm:ss format",
+  "views": "exact view count formatted like 14K views",
+  "year": "exact year published",
   "thumbnail": "https://img.youtube.com/vi/${videoId}/mqdefault.jpg",
-  "summary": "Four detailed and specific sentences about what this video actually covers in ${langName}.",
+  "summary": "Write a comprehensive 6-8 sentence paragraph covering the entire video. Include main topic, all key concepts discussed, specific examples or tips mentioned, who this video is for, and what the viewer will learn. Be very detailed and specific in ${langName}.",
   "keyPoints": [
-    "specific insight 1 about this video in ${langName}",
-    "specific insight 2",
-    "specific insight 3",
-    "specific insight 4",
-    "specific insight 5"
+    "Detailed insight 1 with full explanation of the concept in ${langName}",
+    "Detailed insight 2 with full explanation",
+    "Detailed insight 3 with full explanation",
+    "Detailed insight 4 with full explanation",
+    "Detailed insight 5 with full explanation",
+    "Detailed insight 6 with full explanation",
+    "Detailed insight 7 with full explanation"
   ],
   "chapters": [
-    {"timestamp": "0:00", "title": "specific chapter title in ${langName}", "description": "specific description of what happens at this timestamp"},
-    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"},
-    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"},
-    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"},
-    {"timestamp": "calculate based on duration", "title": "specific chapter title", "description": "specific description"}
+    {"timestamp": "0:00", "title": "specific chapter title in ${langName}", "description": "detailed description of what happens in this section"},
+    {"timestamp": "calculated based on duration", "title": "specific chapter title", "description": "detailed description"},
+    {"timestamp": "calculated based on duration", "title": "specific chapter title", "description": "detailed description"},
+    {"timestamp": "calculated based on duration", "title": "specific chapter title", "description": "detailed description"},
+    {"timestamp": "calculated based on duration", "title": "specific chapter title", "description": "detailed description"}
   ],
   "qa": [
-    {"question": "specific question about this video in ${langName}?", "answer": "specific detailed answer in ${langName}."},
-    {"question": "specific question?", "answer": "specific answer."},
-    {"question": "specific question?", "answer": "specific answer."},
-    {"question": "specific question?", "answer": "specific answer."},
-    {"question": "specific question?", "answer": "specific answer."}
+    {"question": "specific detailed question about this video in ${langName}?", "answer": "Write a detailed 3-4 sentence answer that fully explains the concept with examples from the video in ${langName}."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."}
   ],
   "flashcards": [
-    {"term": "specific term from video in ${langName}", "definition": "precise definition in ${langName}."},
-    {"term": "specific term", "definition": "precise definition."},
-    {"term": "specific term", "definition": "precise definition."},
-    {"term": "specific term", "definition": "precise definition."},
-    {"term": "specific term", "definition": "precise definition."},
-    {"term": "specific term", "definition": "precise definition."},
-    {"term": "specific term", "definition": "precise definition."},
-    {"term": "specific term", "definition": "precise definition."}
+    {"term": "specific term from video in ${langName}", "definition": "detailed precise definition with context from the video."},
+    {"term": "specific term", "definition": "detailed definition."},
+    {"term": "specific term", "definition": "detailed definition."},
+    {"term": "specific term", "definition": "detailed definition."},
+    {"term": "specific term", "definition": "detailed definition."},
+    {"term": "specific term", "definition": "detailed definition."},
+    {"term": "specific term", "definition": "detailed definition."},
+    {"term": "specific term", "definition": "detailed definition."}
   ],
   "mindmap": {
     "center": "core topic of video in ${langName}",
@@ -133,12 +135,12 @@ Return ONLY a raw valid JSON object. No markdown. No backticks. No explanation. 
     "specific question?",
     "specific question?"
   ],
-  "context": "Detailed paragraph in ${langName} summarizing the full video content accurately."
+  "context": "Write a very detailed 4-5 sentence paragraph in ${langName} summarizing the full video content accurately including all main points discussed."
 }`;
 
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
-    max_tokens: 3000,
+    max_tokens: 4096,
     temperature: 0.3,
     messages: [{ role: "user", content: prompt }],
   });
@@ -154,7 +156,7 @@ async function chatWithVideo({ videoTitle, channel, context, history, question, 
   const messages = [
     {
       role: "system",
-      content: `You are VidBrain, expert assistant for the YouTube video "${videoTitle}" by ${channel}. Context: ${context}. Answer ALL questions in ${langName} only. Be specific and concise.`,
+      content: `You are VidBrain, expert assistant for the YouTube video "${videoTitle}" by ${channel}. Context: ${context}. Answer ALL questions in ${langName} only. Give detailed, comprehensive answers with examples. Be specific and thorough.`,
     },
     ...history,
     { role: "user", content: question },
@@ -162,7 +164,7 @@ async function chatWithVideo({ videoTitle, channel, context, history, question, 
 
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
-    max_tokens: 1024,
+    max_tokens: 2048,
     messages,
   });
 
