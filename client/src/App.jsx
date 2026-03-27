@@ -3,27 +3,42 @@ import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Loader from "./components/Loader";
 import Results from "./components/Results";
+import LandingPage from "./components/LandingPage";
 import { useAnalysis } from "./hooks/useAnalysis";
 
 export default function App() {
   const { status, loadingStep, loadingProgress, videoData, error, analyze, reset } = useAnalysis();
   const [toast, setToast] = useState(null);
+  const [showLanding, setShowLanding] = useState(true);
 
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(null), 2800);
   }
 
+  function handleGetStarted() {
+    setShowLanding(false);
+  }
+
+  function handleReset() {
+    reset();
+    setShowLanding(true);
+  }
+
+  if (showLanding) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
+
   return (
     <div className="min-h-screen bg-bg-1 text-white font-sans">
-      <Header onLogoClick={status === "done" ? reset : undefined} />
+      <Header onLogoClick={handleReset} />
       <main className="max-w-4xl mx-auto px-4 pb-24">
         {status === "idle" || status === "error" ? (
           <Hero onAnalyze={analyze} error={error} />
         ) : status === "loading" ? (
           <Loader step={loadingStep} progress={loadingProgress} />
         ) : (
-          <Results videoData={videoData} onReset={reset} showToast={showToast} />
+          <Results videoData={videoData} onReset={handleReset} showToast={showToast} />
         )}
       </main>
       {toast && (
