@@ -1,6 +1,7 @@
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 const express = require("express");
 const cors = require("cors");
+const { initDB } = require("./services/db");
 
 const { router: analyzeRouter } = require("./routes/analyze");
 const chatRouter = require("./routes/chat");
@@ -17,7 +18,7 @@ app.use(cors({
     /\.netlify\.app$/,
     /\.vercel\.app$/,
   ],
-  credentials: true
+  credentials: true,
 }));
 
 app.use(express.json());
@@ -36,7 +37,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal server error" });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🧠 VidBrain server → http://localhost:${PORT}`);
-  console.log(`   API key: ${process.env.GROQ_API_KEY ? "✓ loaded" : "✗ MISSING"}\n`);
+initDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`\n🧠 VidBrain server → http://localhost:${PORT}`);
+    console.log(`   API key: ${process.env.GROQ_API_KEY ? "✓ loaded" : "✗ MISSING"}`);
+    console.log(`   Database: ${process.env.DATABASE_URL ? "✓ connected" : "✗ MISSING"}\n`);
+  });
 });

@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const { fetchTranscript } = require("../services/transcript");
 const { analyzeVideo } = require("../services/ai");
+const { saveAnalysis } = require("../services/db");
 const { nanoid } = require("nanoid");
 
 const analyses = new Map();
 
 router.post("/", async (req, res) => {
-  const { url, language = "en" } = req.body;
+  const { url, language = "en", sessionId } = req.body;
   if (!url) return res.status(400).json({ error: "url is required" });
 
   try {
@@ -19,6 +20,22 @@ router.post("/", async (req, res) => {
 
     const shareId = nanoid(8);
     analyses.set(shareId, { ...analysis, url, shareId, language, createdAt: new Date().toISOString() });
+
+    // Save to PostgreSQL
+    if (sessionId) {
+      await saveAnalysis({
+        shareId,
+        sessionId,
+        title: analysis.title,
+        channel: analysis.channel,
+        url,
+        thumbnail: analysis.thumbnail,
+        duration: analysis.duration,
+        views: analysis.views,
+        year: analysis.year,
+        language,
+      });
+    }
 
     res.json({ success: true, data: { ...analysis, shareId, language } });
   } catch (err) {

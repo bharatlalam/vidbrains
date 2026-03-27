@@ -1,23 +1,26 @@
 const express = require("express");
 const router = express.Router();
+const { getHistory, saveQuizScore, getQuizScores } = require("../services/db");
 
-let analyses = [];
-
-router.get("/", (req, res) => {
-  res.json({ success: true, data: analyses.slice(-20).reverse() });
+router.get("/", async (req, res) => {
+  const { sessionId } = req.query;
+  if (!sessionId) return res.json({ success: true, data: [] });
+  const data = await getHistory(sessionId);
+  res.json({ success: true, data });
 });
 
-router.post("/", (req, res) => {
-  const { title, url, thumbnail, channel, duration } = req.body;
-  const entry = { id: Date.now().toString(), title, url, thumbnail, channel, duration, savedAt: new Date().toISOString() };
-  analyses.push(entry);
-  if (analyses.length > 100) analyses = analyses.slice(-100);
-  res.json({ success: true, data: entry });
-});
-
-router.delete("/:id", (req, res) => {
-  analyses = analyses.filter((a) => a.id !== req.params.id);
+router.post("/quiz-score", async (req, res) => {
+  const { sessionId, videoTitle, score, total } = req.body;
+  if (!sessionId) return res.json({ success: true });
+  await saveQuizScore({ sessionId, videoTitle, score, total });
   res.json({ success: true });
+});
+
+router.get("/quiz-scores", async (req, res) => {
+  const { sessionId } = req.query;
+  if (!sessionId) return res.json({ success: true, data: [] });
+  const data = await getQuizScores(sessionId);
+  res.json({ success: true, data });
 });
 
 module.exports = router;
