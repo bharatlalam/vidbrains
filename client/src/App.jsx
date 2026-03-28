@@ -4,12 +4,14 @@ import Hero from "./components/Hero";
 import Loader from "./components/Loader";
 import Results from "./components/Results";
 import LandingPage from "./components/LandingPage";
+import HistoryPanel from "./components/HistoryPanel";
 import { useAnalysis } from "./hooks/useAnalysis";
 
 export default function App() {
   const { status, loadingStep, loadingProgress, videoData, error, analyze, reset } = useAnalysis();
   const [toast, setToast] = useState(null);
   const [showLanding, setShowLanding] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   function showToast(msg) {
     setToast(msg);
@@ -18,11 +20,19 @@ export default function App() {
 
   function handleGetStarted() {
     setShowLanding(false);
+    setShowHistory(false);
   }
 
   function handleReset() {
     reset();
     setShowLanding(true);
+    setShowHistory(false);
+  }
+
+  function handleHistorySelect(url, language) {
+    setShowHistory(false);
+    setShowLanding(false);
+    analyze(url, language);
   }
 
   if (showLanding) {
@@ -31,9 +41,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg-1 text-white font-sans">
-      <Header onLogoClick={handleReset} />
+      <Header
+        onLogoClick={handleReset}
+        onHistoryClick={() => setShowHistory((v) => !v)}
+        showHistory={showHistory}
+      />
       <main className="max-w-4xl mx-auto px-4 pb-24">
-        {status === "idle" || status === "error" ? (
+        {showHistory ? (
+          <div className="pt-8 animate-fade-in">
+            <HistoryPanel onSelect={handleHistorySelect} />
+          </div>
+        ) : status === "idle" || status === "error" ? (
           <Hero onAnalyze={analyze} error={error} />
         ) : status === "loading" ? (
           <Loader step={loadingStep} progress={loadingProgress} />
