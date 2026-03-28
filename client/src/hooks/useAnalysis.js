@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { analyzeVideo as apiAnalyze, sendChat as apiChat, saveHistory } from "../utils/api";
+import { analyzeVideo as apiAnalyze, sendChat as apiChat } from "../utils/api";
 
 const STEPS = [
   "Fetching video metadata...",
@@ -37,7 +37,6 @@ export function useAnalysis() {
       await new Promise((r) => setTimeout(r, 300));
       setVideoData(data);
       setStatus("done");
-      saveHistory({ title: data.title, url, thumbnail: data.thumbnail, channel: data.channel, duration: data.duration }).catch(() => {});
     } catch (e) {
       clearInterval(interval);
       setError(e?.response?.data?.error || e.message || "Analysis failed.");
