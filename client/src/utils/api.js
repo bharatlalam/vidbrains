@@ -1,12 +1,24 @@
 import axios from "axios";
 
-const api = axios.create({ 
-  baseURL: "https://vidbrain-server.onrender.com/api", 
-  timeout: 90000 
+const api = axios.create({
+  baseURL: "https://vidbrain-server.onrender.com/api",
+  timeout: 90000,
 });
 
+// Session ID — unique per browser, persists across visits
+function getSessionId() {
+  let id = localStorage.getItem("vb_session");
+  if (!id) {
+    id = "sess_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("vb_session", id);
+  }
+  return id;
+}
+
+export const sessionId = getSessionId();
+
 export async function analyzeVideo(url, language = "en") {
-  const { data } = await api.post("/analyze", { url, language });
+  const { data } = await api.post("/analyze", { url, language, sessionId: getSessionId() });
   return data.data;
 }
 
@@ -25,12 +37,16 @@ export async function getSharedAnalysis(shareId) {
   return data.data;
 }
 
-export async function saveHistory(entry) {
-  const { data } = await api.post("/history", entry);
+export async function getHistory() {
+  const { data } = await api.get(`/history?sessionId=${getSessionId()}`);
   return data.data;
 }
 
-export async function getHistory() {
-  const { data } = await api.get("/history");
-  return data.data;
+export async function saveQuizScore({ videoTitle, score, total }) {
+  await api.post("/history/quiz-score", {
+    sessionId: getSessionId(),
+    videoTitle,
+    score,
+    total,
+  });
 }

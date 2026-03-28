@@ -15,6 +15,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://vidbrains.netlify.app",
+    "https://vidbrains.vercel.app",
     /\.netlify\.app$/,
     /\.vercel\.app$/,
   ],
