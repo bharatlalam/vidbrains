@@ -4,8 +4,10 @@ import ChaptersPanel   from "./panels/ChaptersPanel";
 import QAPanel         from "./panels/QAPanel";
 import FlashcardsPanel from "./panels/FlashcardsPanel";
 import MindMapPanel    from "./panels/MindMapPanel";
-import ChatPanel       from "./panels/ChatPanel";
 import QuizPanel       from "./panels/QuizPanel";
+import ChatPanel       from "./panels/ChatPanel";
+import PodcastPanel    from "./panels/PodcastPanel";
+import ReadingPanel    from "./panels/ReadingPanel";
 
 const TABS = [
   { id: "summary",    label: "Summary",    icon: "📋" },
@@ -14,6 +16,8 @@ const TABS = [
   { id: "flashcards", label: "Flashcards", icon: "🃏" },
   { id: "mindmap",    label: "Mind Map",   icon: "🗺" },
   { id: "quiz",       label: "Quiz",       icon: "🧠" },
+  { id: "podcast",    label: "Podcast",    icon: "🎙️" },
+  { id: "reading",    label: "Read",       icon: "📖" },
   { id: "chat",       label: "Chat",       icon: "💬" },
 ];
 
@@ -33,6 +37,8 @@ export default function Results({ videoData, onReset, showToast }) {
     flashcards: <FlashcardsPanel data={videoData} showToast={showToast} />,
     mindmap:    <MindMapPanel    data={videoData} showToast={showToast} />,
     quiz:       <QuizPanel       data={videoData} showToast={showToast} />,
+    podcast:    <PodcastPanel    data={videoData} />,
+    reading:    <ReadingPanel    data={videoData} />,
     chat:       <ChatPanel       data={videoData} />,
   };
 
@@ -73,9 +79,9 @@ export default function Results({ videoData, onReset, showToast }) {
         style={{ background: "#131316", border: "1px solid rgba(255,255,255,0.07)" }}>
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActive(tab.id)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
             style={{ background: active === tab.id ? "#222228" : "transparent", color: active === tab.id ? "#f0efe8" : "#9b9a96", border: "none", cursor: "pointer" }}>
-            <span style={{ fontSize: 14 }}>{tab.icon}</span>{tab.label}
+            <span style={{ fontSize: 13 }}>{tab.icon}</span>{tab.label}
           </button>
         ))}
       </div>
