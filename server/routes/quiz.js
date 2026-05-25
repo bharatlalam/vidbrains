@@ -4,7 +4,6 @@ const Groq = require("groq-sdk");
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// POST /api/quiz
 router.post("/", async (req, res) => {
   const { title, context, keyPoints } = req.body;
   if (!context) return res.status(400).json({ error: "context is required" });

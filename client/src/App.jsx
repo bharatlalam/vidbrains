@@ -5,6 +5,7 @@ import Loader from "./components/Loader";
 import Results from "./components/Results";
 import LandingPage from "./components/LandingPage";
 import HistoryPanel from "./components/HistoryPanel";
+import CompareView from "./components/CompareView";
 import { useAnalysis } from "./hooks/useAnalysis";
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [showLanding, setShowLanding] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
 
   function showToast(msg) {
     setToast(msg);
@@ -21,33 +23,38 @@ export default function App() {
   function handleGetStarted() {
     setShowLanding(false);
     setShowHistory(false);
+    setShowCompare(false);
   }
 
   function handleReset() {
     reset();
     setShowLanding(true);
     setShowHistory(false);
+    setShowCompare(false);
   }
 
   function handleHistorySelect(url, language) {
     setShowHistory(false);
+    setShowCompare(false);
     setShowLanding(false);
     analyze(url, language);
   }
 
-  if (showLanding) {
-    return <LandingPage onGetStarted={handleGetStarted} />;
-  }
+  if (showLanding) return <LandingPage onGetStarted={handleGetStarted} />;
 
   return (
     <div className="min-h-screen bg-bg-1 text-white font-sans">
       <Header
         onLogoClick={handleReset}
-        onHistoryClick={() => setShowHistory((v) => !v)}
+        onHistoryClick={() => { setShowHistory((v) => !v); setShowCompare(false); }}
+        onCompareClick={() => { setShowCompare((v) => !v); setShowHistory(false); }}
         showHistory={showHistory}
+        showCompare={showCompare}
       />
       <main className="max-w-4xl mx-auto px-4 pb-24">
-        {showHistory ? (
+        {showCompare ? (
+          <CompareView onBack={() => setShowCompare(false)} />
+        ) : showHistory ? (
           <div className="pt-8 animate-fade-in">
             <HistoryPanel onSelect={handleHistorySelect} />
           </div>

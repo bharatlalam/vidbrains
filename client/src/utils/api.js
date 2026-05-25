@@ -2,10 +2,9 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://vidbrain-server.onrender.com/api",
-  timeout: 90000,
+  timeout: 120000,
 });
 
-// Session ID — unique per browser, persists across visits
 function getSessionId() {
   let id = localStorage.getItem("vb_session");
   if (!id) {
@@ -19,6 +18,11 @@ export const sessionId = getSessionId();
 
 export async function analyzeVideo(url, language = "en") {
   const { data } = await api.post("/analyze", { url, language, sessionId: getSessionId() });
+  return data.data;
+}
+
+export async function compareVideos(url1, url2, language = "en") {
+  const { data } = await api.post("/compare", { url1, url2, language });
   return data.data;
 }
 

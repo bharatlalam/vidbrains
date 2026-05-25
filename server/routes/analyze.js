@@ -21,7 +21,6 @@ router.post("/", async (req, res) => {
     const shareId = nanoid(8);
     analyses.set(shareId, { ...analysis, url, shareId, language, createdAt: new Date().toISOString() });
 
-    // Save to PostgreSQL
     if (sessionId) {
       await saveAnalysis({
         shareId,

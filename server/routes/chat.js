@@ -3,11 +3,11 @@ const router = express.Router();
 const { chatWithVideo } = require("../services/ai");
 
 router.post("/", async (req, res) => {
-  const { videoTitle, channel, context, history = [], question } = req.body;
+  const { videoTitle, channel, context, history = [], question, language = "en" } = req.body;
   if (!question || !context) return res.status(400).json({ error: "question and context required" });
 
   try {
-    const reply = await chatWithVideo({ videoTitle, channel, context, history, question });
+    const reply = await chatWithVideo({ videoTitle, channel, context, history, question, language });
     res.json({ success: true, reply });
   } catch (err) {
     console.error("[chat] error:", err.message);

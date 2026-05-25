@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Header({ onLogoClick, onHistoryClick, showHistory }) {
+export default function Header({ onLogoClick, onHistoryClick, onCompareClick, showHistory, showCompare }) {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-6 h-14 border-b"
       style={{ background: "rgba(13,13,15,0.85)", backdropFilter: "blur(20px)", borderColor: "rgba(255,255,255,0.07)" }}>
@@ -10,10 +10,19 @@ export default function Header({ onLogoClick, onHistoryClick, showHistory }) {
         VidBrain
       </button>
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onHistoryClick}
-          className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+      <div className="flex items-center gap-2">
+        <button onClick={onCompareClick}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+          style={{
+            border: `1px solid ${showCompare ? "rgba(74,158,255,0.4)" : "rgba(255,255,255,0.07)"}`,
+            background: showCompare ? "rgba(74,158,255,0.1)" : "transparent",
+            color: showCompare ? "#4a9eff" : "#9b9a96",
+            cursor: "pointer",
+          }}>
+          ⚖️ Compare
+        </button>
+        <button onClick={onHistoryClick}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
           style={{
             border: `1px solid ${showHistory ? "rgba(224,90,43,0.4)" : "rgba(255,255,255,0.07)"}`,
             background: showHistory ? "rgba(224,90,43,0.1)" : "transparent",

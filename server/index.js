@@ -7,6 +7,7 @@ const { router: analyzeRouter } = require("./routes/analyze");
 const chatRouter = require("./routes/chat");
 const historyRouter = require("./routes/history");
 const quizRouter = require("./routes/quiz");
+const compareRouter = require("./routes/compare");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.use("/api/analyze", analyzeRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/history", historyRouter);
 app.use("/api/quiz", quizRouter);
+app.use("/api/compare", compareRouter);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", version: "1.0.0" });
