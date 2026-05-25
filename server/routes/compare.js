@@ -6,6 +6,35 @@ const Groq = require("groq-sdk");
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+async function safeParseJSON(raw) {
+  let clean = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start === -1 || end === -1) throw new Error("No JSON found");
+  clean = clean.slice(start, end + 1);
+  clean = clean
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    .replace(/,\s*}/g, "}")
+    .replace(/,\s*]/g, "]");
+
+  try {
+    return JSON.parse(clean);
+  } catch (e) {
+    console.warn("[compare] JSON repair attempting...");
+    const repair = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 2000,
+      temperature: 0,
+      messages: [{ role: "user", content: `Fix this broken JSON. Return ONLY valid JSON, no markdown:\n\n${clean.slice(0, 3000)}` }],
+    });
+    const fixed = repair.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+    const fs = fixed.indexOf("{");
+    const fe = fixed.lastIndexOf("}");
+    if (fs === -1 || fe === -1) throw new Error("Could not repair JSON");
+    return JSON.parse(fixed.slice(fs, fe + 1));
+  }
+}
+
 router.post("/", async (req, res) => {
   const { url1, url2, language = "en" } = req.body;
   if (!url1 || !url2) return res.status(400).json({ error: "Both URLs required" });
@@ -22,25 +51,23 @@ router.post("/", async (req, res) => {
       ),
     ]);
 
-    const prompt = `You are VidBrain AI. Compare these two YouTube videos and generate a detailed comparison.
+    const prompt = `You are VidBrain AI. Compare these two YouTube videos.
 
 Video 1: "${r1.title}" by ${r1.channel}
-Summary 1: ${r1.summary}
-Key Points 1: ${r1.keyPoints.join(", ")}
+Summary 1: ${r1.summary.slice(0, 300)}
 
 Video 2: "${r2.title}" by ${r2.channel}
-Summary 2: ${r2.summary}
-Key Points 2: ${r2.keyPoints.join(", ")}
+Summary 2: ${r2.summary.slice(0, 300)}
 
-Return ONLY raw JSON, no markdown, no backticks:
+Return ONLY raw valid JSON, no markdown, no backticks, no trailing commas, no special characters:
 {
   "verdict": "One sentence verdict on which video is better and why",
   "winner": 1,
   "comparison": [
-    {"aspect": "Content Depth", "video1": "assessment", "video2": "assessment", "winner": 1},
-    {"aspect": "Beginner Friendly", "video1": "assessment", "video2": "assessment", "winner": 2},
-    {"aspect": "Practical Tips", "video1": "assessment", "video2": "assessment", "winner": 1},
-    {"aspect": "Coverage", "video1": "assessment", "video2": "assessment", "winner": 2},
+    {"aspect": "Content Depth", "video1": "short assessment", "video2": "short assessment", "winner": 1},
+    {"aspect": "Beginner Friendly", "video1": "short assessment", "video2": "short assessment", "winner": 2},
+    {"aspect": "Practical Tips", "video1": "short assessment", "video2": "short assessment", "winner": 1},
+    {"aspect": "Coverage", "video1": "short assessment", "video2": "short assessment", "winner": 2},
     {"aspect": "Best For", "video1": "who should watch", "video2": "who should watch", "winner": 0}
   ],
   "similarities": ["similarity 1", "similarity 2", "similarity 3"],
@@ -49,16 +76,13 @@ Return ONLY raw JSON, no markdown, no backticks:
 
     const response = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 1500,
-      temperature: 0.3,
+      max_tokens: 1000,
+      temperature: 0.2,
       messages: [{ role: "user", content: prompt }],
     });
 
     const raw = response.choices[0].message.content;
-    const clean = raw.replace(/```json/g, "").replace(/```/g, "").trim();
-    const start = clean.indexOf("{");
-    const end = clean.lastIndexOf("}");
-    const comparison = JSON.parse(clean.slice(start, end + 1));
+    const comparison = await safeParseJSON(raw);
 
     res.json({ success: true, data: { video1: r1, video2: r2, comparison } });
   } catch (err) {
