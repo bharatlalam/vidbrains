@@ -40,10 +40,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal server error" });
 });
 
-initDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n🧠 VidBrain server → http://localhost:${PORT}`);
-    console.log(`   API key: ${process.env.GROQ_API_KEY ? "✓ loaded" : "✗ MISSING"}`);
-    console.log(`   Database: ${process.env.DATABASE_URL ? "✓ connected" : "✗ MISSING"}\n`);
-  });
+// Start server FIRST then connect DB
+app.listen(PORT, () => {
+  console.log(`\n🧠 VidBrain server → http://localhost:${PORT}`);
+  console.log(`   API key: ${process.env.GROQ_API_KEY ? "✓ loaded" : "✗ MISSING"}`);
+  console.log(`   Database: ${process.env.DATABASE_URL ? "✓ connected" : "✗ MISSING"}\n`);
 });
+
+// Connect DB after server starts
+initDB().catch((e) => console.error("[db] init error:", e.message));
