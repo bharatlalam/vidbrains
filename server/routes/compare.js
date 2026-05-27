@@ -42,38 +42,57 @@ router.post("/", async (req, res) => {
   try {
     console.log(`[compare] Analyzing both videos...`);
 
-    // Run sequentially to avoid rate limits
     const t1 = await fetchTranscript(url1);
-    const r1 = await analyzeVideo({ videoId: t1.videoId, url: url1, fullText: t1.fullText, duration: t1.duration, metadata: t1.metadata, language });
-    
-    // Wait 15 seconds before second call to avoid rate limit
+    const r1 = await analyzeVideo({
+      videoId: t1.videoId, url: url1,
+      fullText: t1.fullText, duration: t1.duration,
+      metadata: t1.metadata, language,
+    });
+
     console.log("[compare] Waiting 15s to avoid rate limit...");
     await new Promise((r) => setTimeout(r, 15000));
-    
-    const t2 = await fetchTranscript(url2);
-    const r2 = await analyzeVideo({ videoId: t2.videoId, url: url2, fullText: t2.fullText, duration: t2.duration, metadata: t2.metadata, language });
 
-    const prompt = `You are VidBrain AI. Compare these two YouTube videos.
+    const t2 = await fetchTranscript(url2);
+    const r2 = await analyzeVideo({
+      videoId: t2.videoId, url: url2,
+      fullText: t2.fullText, duration: t2.duration,
+      metadata: t2.metadata, language,
+    });
+
+    await new Promise((r) => setTimeout(r, 5000));
+
+    const prompt = `You are VidBrain AI. Compare these two YouTube videos in detail.
 
 Video 1: "${r1.title}" by ${r1.channel}
-Summary 1: ${r1.summary.slice(0, 300)}
+Summary 1: ${r1.summary}
+Key Points 1: ${r1.keyPoints.join(". ")}
 
 Video 2: "${r2.title}" by ${r2.channel}
-Summary 2: ${r2.summary.slice(0, 300)}
+Summary 2: ${r2.summary}
+Key Points 2: ${r2.keyPoints.join(". ")}
 
-Return ONLY raw valid JSON, no markdown, no backticks, no trailing commas, no special characters:
+Return ONLY raw valid JSON, no markdown, no backticks, no trailing commas:
 {
-  "verdict": "One sentence verdict on which video is better and why",
+  "verdict": "2-3 sentence detailed verdict explaining which video is better and exactly why",
   "winner": 1,
   "comparison": [
-    {"aspect": "Content Depth", "video1": "short assessment", "video2": "short assessment", "winner": 1},
-    {"aspect": "Beginner Friendly", "video1": "short assessment", "video2": "short assessment", "winner": 2},
-    {"aspect": "Practical Tips", "video1": "short assessment", "video2": "short assessment", "winner": 1},
-    {"aspect": "Coverage", "video1": "short assessment", "video2": "short assessment", "winner": 2},
-    {"aspect": "Best For", "video1": "who should watch", "video2": "who should watch", "winner": 0}
+    {"aspect": "Content Depth", "video1": "detailed assessment 3-5 words", "video2": "detailed assessment 3-5 words", "winner": 1},
+    {"aspect": "Beginner Friendly", "video1": "detailed assessment 3-5 words", "video2": "detailed assessment 3-5 words", "winner": 2},
+    {"aspect": "Practical Tips", "video1": "detailed assessment 3-5 words", "video2": "detailed assessment 3-5 words", "winner": 1},
+    {"aspect": "Presentation Style", "video1": "detailed assessment 3-5 words", "video2": "detailed assessment 3-5 words", "winner": 2},
+    {"aspect": "Coverage", "video1": "detailed assessment 3-5 words", "video2": "detailed assessment 3-5 words", "winner": 1},
+    {"aspect": "Best For", "video1": "who should watch this", "video2": "who should watch this", "winner": 0}
   ],
-  "similarities": ["similarity 1", "similarity 2", "similarity 3"],
-  "differences": ["difference 1", "difference 2", "difference 3"]
+  "similarities": [
+    "detailed similarity point 1 explaining what both videos share",
+    "detailed similarity point 2",
+    "detailed similarity point 3"
+  ],
+  "differences": [
+    "detailed difference point 1 explaining how they differ",
+    "detailed difference point 2",
+    "detailed difference point 3"
+  ]
 }`;
 
     const response = await client.chat.completions.create({
