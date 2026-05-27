@@ -42,14 +42,16 @@ router.post("/", async (req, res) => {
   try {
     console.log(`[compare] Analyzing both videos...`);
 
-    const [r1, r2] = await Promise.all([
-      fetchTranscript(url1).then(({ videoId, fullText, duration, metadata }) =>
-        analyzeVideo({ videoId, url: url1, fullText, duration, metadata, language })
-      ),
-      fetchTranscript(url2).then(({ videoId, fullText, duration, metadata }) =>
-        analyzeVideo({ videoId, url: url2, fullText, duration, metadata, language })
-      ),
-    ]);
+    // Run sequentially to avoid rate limits
+    const t1 = await fetchTranscript(url1);
+    const r1 = await analyzeVideo({ videoId: t1.videoId, url: url1, fullText: t1.fullText, duration: t1.duration, metadata: t1.metadata, language });
+    
+    // Wait 15 seconds before second call to avoid rate limit
+    console.log("[compare] Waiting 15s to avoid rate limit...");
+    await new Promise((r) => setTimeout(r, 15000));
+    
+    const t2 = await fetchTranscript(url2);
+    const r2 = await analyzeVideo({ videoId: t2.videoId, url: url2, fullText: t2.fullText, duration: t2.duration, metadata: t2.metadata, language });
 
     const prompt = `You are VidBrain AI. Compare these two YouTube videos.
 
