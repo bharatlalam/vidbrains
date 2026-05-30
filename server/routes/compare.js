@@ -42,43 +42,72 @@ router.post("/", async (req, res) => {
   try {
     console.log(`[compare] Analyzing both videos...`);
 
-    // Run sequentially to avoid rate limits
     const t1 = await fetchTranscript(url1);
     const r1 = await analyzeVideo({ videoId: t1.videoId, url: url1, fullText: t1.fullText, duration: t1.duration, metadata: t1.metadata, language });
-    
-    // Wait 15 seconds before second call to avoid rate limit
+
     console.log("[compare] Waiting 15s to avoid rate limit...");
     await new Promise((r) => setTimeout(r, 15000));
-    
+
     const t2 = await fetchTranscript(url2);
     const r2 = await analyzeVideo({ videoId: t2.videoId, url: url2, fullText: t2.fullText, duration: t2.duration, metadata: t2.metadata, language });
 
-    const prompt = `You are VidBrain AI. Compare these two YouTube videos.
+    const prompt = `You are VidBrain AI. Do a deep detailed comparison of these two YouTube videos. Do NOT say which is better or pick a winner. Just compare them in depth so the user understands what each video covers and how they differ.
 
 Video 1: "${r1.title}" by ${r1.channel}
-Summary 1: ${r1.summary.slice(0, 300)}
+Summary: ${r1.summary}
+Key Points: ${r1.keyPoints.join(". ")}
 
 Video 2: "${r2.title}" by ${r2.channel}
-Summary 2: ${r2.summary.slice(0, 300)}
+Summary: ${r2.summary}
+Key Points: ${r2.keyPoints.join(". ")}
 
-Return ONLY raw valid JSON, no markdown, no backticks, no trailing commas, no special characters:
+Return ONLY raw valid JSON, no markdown, no backticks, no trailing commas, keep strings under 25 words:
 {
-  "verdict": "One sentence verdict on which video is better and why",
-  "winner": 1,
-  "comparison": [
-    {"aspect": "Content Depth", "video1": "short assessment", "video2": "short assessment", "winner": 1},
-    {"aspect": "Beginner Friendly", "video1": "short assessment", "video2": "short assessment", "winner": 2},
-    {"aspect": "Practical Tips", "video1": "short assessment", "video2": "short assessment", "winner": 1},
-    {"aspect": "Coverage", "video1": "short assessment", "video2": "short assessment", "winner": 2},
-    {"aspect": "Best For", "video1": "who should watch", "video2": "who should watch", "winner": 0}
+  "overview": "2 sentences describing what both videos are about and how they relate to each other",
+  "video1Summary": "3 sentences explaining what Video 1 specifically covers and what you will learn from it",
+  "video2Summary": "3 sentences explaining what Video 2 specifically covers and what you will learn from it",
+  "aspects": [
+    {
+      "aspect": "Topic Focus",
+      "video1": "what video 1 focuses on for this aspect",
+      "video2": "what video 2 focuses on for this aspect"
+    },
+    {
+      "aspect": "Target Audience",
+      "video1": "who video 1 is best for",
+      "video2": "who video 2 is best for"
+    },
+    {
+      "aspect": "Depth of Coverage",
+      "video1": "how deep video 1 goes",
+      "video2": "how deep video 2 goes"
+    },
+    {
+      "aspect": "Teaching Style",
+      "video1": "how video 1 teaches",
+      "video2": "how video 2 teaches"
+    },
+    {
+      "aspect": "Practical Content",
+      "video1": "practical elements in video 1",
+      "video2": "practical elements in video 2"
+    },
+    {
+      "aspect": "Key Takeaway",
+      "video1": "main thing you learn from video 1",
+      "video2": "main thing you learn from video 2"
+    }
   ],
-  "similarities": ["similarity 1", "similarity 2", "similarity 3"],
-  "differences": ["difference 1", "difference 2", "difference 3"]
+  "uniqueToVideo1": ["something only in video 1", "another unique point", "another unique point"],
+  "uniqueToVideo2": ["something only in video 2", "another unique point", "another unique point"],
+  "commonTopics": ["topic both cover", "topic both cover", "topic both cover"],
+  "watchVideo1If": "one sentence — watch video 1 if you want this specific thing",
+  "watchVideo2If": "one sentence — watch video 2 if you want this specific thing"
 }`;
 
     const response = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 1000,
+      max_tokens: 1500,
       temperature: 0.2,
       messages: [{ role: "user", content: prompt }],
     });
