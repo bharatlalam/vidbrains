@@ -30,8 +30,10 @@ async function fetchTranscript(url) {
 
   try {
     const apiKey = process.env.YOUTUBE_API_KEY;
-    const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoId}&key=${apiKey}`;
-    const raw = await httpsGet(apiUrl);
+
+    // Fetch video details
+    const videoUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoId}&key=${apiKey}`;
+    const raw = await httpsGet(videoUrl);
     const data = JSON.parse(raw);
 
     if (!data.items || data.items.length === 0) {
@@ -43,13 +45,30 @@ async function fetchTranscript(url) {
     const snippet = item.snippet;
     const stats = item.statistics;
 
+    // Also fetch comments for more context
+    let topComments = "";
+    try {
+      const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=10&order=relevance&key=${apiKey}`;
+      const commentsRaw = await httpsGet(commentsUrl);
+      const commentsData = JSON.parse(commentsRaw);
+      if (commentsData.items) {
+        topComments = commentsData.items
+          .map((c) => c.snippet.topLevelComment.snippet.textDisplay)
+          .join(" | ")
+          .slice(0, 1000);
+      }
+    } catch (e) {
+      console.warn("[transcript] Comments fetch failed:", e.message);
+    }
+
     const metadata = {
       title: snippet.title,
       channel: snippet.channelTitle,
-      description: snippet.description?.slice(0, 2000) || "",
-      tags: (snippet.tags || []).slice(0, 20).join(", "),
+      description: snippet.description?.slice(0, 3000) || "",
+      tags: (snippet.tags || []).slice(0, 30).join(", "),
       publishedAt: snippet.publishedAt?.slice(0, 4),
       viewCount: stats?.viewCount,
+      likeCount: stats?.likeCount,
       duration: item.contentDetails?.duration,
     };
 
@@ -57,8 +76,15 @@ async function fetchTranscript(url) {
 Channel: ${metadata.channel}
 Published: ${metadata.publishedAt}
 Views: ${metadata.viewCount}
+Likes: ${metadata.likeCount}
+Duration: ${metadata.duration}
 Tags: ${metadata.tags}
-Description: ${metadata.description}`;
+
+Full Description:
+${metadata.description}
+
+Top Viewer Comments:
+${topComments}`;
 
     console.log(`[transcript] Got metadata for: "${metadata.title}"`);
     return { videoId, fullText, duration: metadata.duration, metadata };
