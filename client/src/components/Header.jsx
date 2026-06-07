@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Header({ onLogoClick, onHistoryClick, onCompareClick, showHistory, showCompare }) {
+export default function Header({ onLogoClick, onHistoryClick, onCompareClick, onDashboardClick, showHistory, showCompare, showDashboard }) {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-6 h-14 border-b"
       style={{ background: "rgba(13,13,15,0.85)", backdropFilter: "blur(20px)", borderColor: "rgba(255,255,255,0.07)" }}>
@@ -11,6 +11,16 @@ export default function Header({ onLogoClick, onHistoryClick, onCompareClick, sh
       </button>
 
       <div className="flex items-center gap-2">
+        <button onClick={onDashboardClick}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+          style={{
+            border: `1px solid ${showDashboard ? "rgba(60,184,122,0.4)" : "rgba(255,255,255,0.07)"}`,
+            background: showDashboard ? "rgba(60,184,122,0.1)" : "transparent",
+            color: showDashboard ? "#3cb87a" : "#9b9a96",
+            cursor: "pointer",
+          }}>
+          📊 Stats
+        </button>
         <button onClick={onCompareClick}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
           style={{
@@ -31,7 +41,7 @@ export default function Header({ onLogoClick, onHistoryClick, onCompareClick, sh
           }}>
           🕐 History
         </button>
-        <span className="text-xs font-bold tracking-widest px-2 py-1 rounded-full uppercase"
+        <span className="text-xs font-bold tracking-widest px-2 py-1 rounded-full uppercase hidden sm:block"
           style={{ background: "rgba(224,90,43,0.12)", color: "#f07040", border: "1px solid rgba(224,90,43,0.25)", letterSpacing: "1px" }}>
           Beta
         </span>

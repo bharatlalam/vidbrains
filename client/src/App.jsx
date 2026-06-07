@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } = from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Loader from "./components/Loader";
@@ -6,6 +6,7 @@ import Results from "./components/Results";
 import LandingPage from "./components/LandingPage";
 import HistoryPanel from "./components/HistoryPanel";
 import CompareView from "./components/CompareView";
+import DashboardView from "./components/DashboardView";
 import { useAnalysis } from "./hooks/useAnalysis";
 
 export default function App() {
@@ -14,28 +15,32 @@ export default function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(null), 2800);
   }
 
-  function handleGetStarted() {
-    setShowLanding(false);
+  function closeAll() {
     setShowHistory(false);
     setShowCompare(false);
+    setShowDashboard(false);
+  }
+
+  function handleGetStarted() {
+    setShowLanding(false);
+    closeAll();
   }
 
   function handleReset() {
     reset();
     setShowLanding(true);
-    setShowHistory(false);
-    setShowCompare(false);
+    closeAll();
   }
 
   function handleHistorySelect(url, language) {
-    setShowHistory(false);
-    setShowCompare(false);
+    closeAll();
     setShowLanding(false);
     analyze(url, language);
   }
@@ -46,13 +51,17 @@ export default function App() {
     <div className="min-h-screen bg-bg-1 text-white font-sans">
       <Header
         onLogoClick={handleReset}
-        onHistoryClick={() => { setShowHistory((v) => !v); setShowCompare(false); }}
-        onCompareClick={() => { setShowCompare((v) => !v); setShowHistory(false); }}
+        onHistoryClick={() => { setShowHistory((v) => !v); setShowCompare(false); setShowDashboard(false); }}
+        onCompareClick={() => { setShowCompare((v) => !v); setShowHistory(false); setShowDashboard(false); }}
+        onDashboardClick={() => { setShowDashboard((v) => !v); setShowHistory(false); setShowCompare(false); }}
         showHistory={showHistory}
         showCompare={showCompare}
+        showDashboard={showDashboard}
       />
       <main className="max-w-4xl mx-auto px-4 pb-24">
-        {showCompare ? (
+        {showDashboard ? (
+          <DashboardView onBack={() => setShowDashboard(false)} onReanalyze={(topic) => { closeAll(); analyze(topic.url, topic.language); }} />
+        ) : showCompare ? (
           <CompareView onBack={() => setShowCompare(false)} />
         ) : showHistory ? (
           <div className="pt-8 animate-fade-in">

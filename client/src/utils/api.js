@@ -51,6 +51,16 @@ export async function generateConceptGraph({ title, summary, keyPoints, context 
   return data.data;
 }
 
+export async function expandHighlight({ text, videoTitle, context, language }) {
+  const { data } = await api.post("/highlights/expand", { text, videoTitle, context, language });
+  return data.data;
+}
+
+export async function getDashboard() {
+  const { data } = await api.get(`/dashboard?sessionId=${getSessionId()}`);
+  return data.data;
+}
+
 export async function getSharedAnalysis(shareId) {
   const { data } = await api.get(`/analyze/share/${shareId}`);
   return data.data;

@@ -1,6 +1,47 @@
-import React from "react";
+import React, { useState } from "react";
+import { expandHighlight } from "../../utils/api";
 
 export default function SummaryPanel({ data, showToast }) {
+  const [highlights, setHighlights] = useState([]);
+  const [expanding, setExpanding] = useState(false);
+  const [expandedNote, setExpandedNote] = useState(null);
+  const [selectedText, setSelectedText] = useState("");
+
+  function handleTextSelect() {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    if (text && text.length > 10) {
+      setSelectedText(text);
+    }
+  }
+
+  async function handleExpand() {
+    if (!selectedText) return;
+    setExpanding(true);
+    try {
+      const result = await expandHighlight({
+        text: selectedText,
+        videoTitle: data.title,
+        context: data.context,
+        language: data.language || "en",
+      });
+      const newHighlight = {
+        id: Date.now(),
+        text: selectedText,
+        ...result,
+      };
+      setHighlights((h) => [newHighlight, ...h]);
+      setExpandedNote(newHighlight);
+      setSelectedText("");
+      window.getSelection()?.removeAllRanges();
+      showToast("Highlight expanded! ✓");
+    } catch {
+      showToast("Failed to expand. Try again.");
+    } finally {
+      setExpanding(false);
+    }
+  }
+
   function copyMarkdown() {
     const md = `# ${data.title}\n> ${data.channel} · ${data.duration}\n\n## Summary\n${data.summary}\n\n## Key Takeaways\n${data.keyPoints.map((p) => `- ${p}`).join("\n")}\n\n## Chapters\n${data.chapters.map((c) => `- **${c.timestamp}** — ${c.title}: ${c.description}`).join("\n")}\n\n## Q&A\n${data.qa.map((q) => `**Q: ${q.question}**\nA: ${q.answer}`).join("\n\n")}\n\n## Flashcards\n${data.flashcards.map((f) => `**${f.term}**: ${f.definition}`).join("\n\n")}`;
     navigator.clipboard.writeText(md).then(() => showToast("Copied as Markdown ✓"));
@@ -24,23 +65,97 @@ export default function SummaryPanel({ data, showToast }) {
 
   return (
     <div>
-      <div className="text-sm leading-relaxed p-5 rounded-2xl mb-5"
-        style={{ background: "#131316", border: "1px solid rgba(255,255,255,0.07)", color: "#9b9a96", lineHeight: "1.8" }}>
+      {/* Smart Highlight hint */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+        style={{ background: "rgba(224,90,43,0.06)", border: "1px solid rgba(224,90,43,0.15)" }}>
+        <span style={{ fontSize: 14 }}>✨</span>
+        <p className="text-xs" style={{ color: "#9b9a96" }}>
+          <strong style={{ color: "#e05a2b" }}>Smart Highlights:</strong> Select any text below and click Expand to get detailed AI notes
+        </p>
+      </div>
+
+      {/* Selected text toolbar */}
+      {selectedText && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-3 animate-fade-in"
+          style={{ background: "#1a1a1f", border: "1px solid #e05a2b" }}>
+          <p className="text-xs flex-1 truncate" style={{ color: "#9b9a96" }}>
+            Selected: <em style={{ color: "#f0efe8" }}>"{selectedText.slice(0, 60)}{selectedText.length > 60 ? "..." : ""}"</em>
+          </p>
+          <button onClick={handleExpand} disabled={expanding}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0"
+            style={{ background: "#e05a2b", color: "white", border: "none", cursor: expanding ? "not-allowed" : "pointer", opacity: expanding ? 0.6 : 1 }}>
+            {expanding ? "Expanding..." : "✨ Expand"}
+          </button>
+          <button onClick={() => setSelectedText("")}
+            style={{ color: "#5a5958", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
+        </div>
+      )}
+
+      {/* Summary */}
+      <div
+        className="text-sm leading-relaxed p-5 rounded-2xl mb-5 select-text"
+        style={{ background: "#131316", border: "1px solid rgba(255,255,255,0.07)", color: "#9b9a96", lineHeight: "1.8", cursor: "text" }}
+        onMouseUp={handleTextSelect}>
         {data.summary}
       </div>
+
+      {/* Key points */}
       <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#5a5958" }}>Key Takeaways</p>
-      <ul className="flex flex-col gap-2 mb-6">
+      <ul className="flex flex-col gap-2 mb-4" onMouseUp={handleTextSelect}>
         {data.keyPoints.map((point, i) => (
-          <li key={i} className="flex gap-3 items-start px-4 py-3 rounded-xl text-sm"
-            style={{ background: "#131316", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <li key={i}
+            className="flex gap-3 items-start px-4 py-3 rounded-xl text-sm leading-relaxed select-text"
+            style={{ background: "#131316", border: "1px solid rgba(255,255,255,0.07)", cursor: "text" }}>
             <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: "#e05a2b" }} />
             {point}
           </li>
         ))}
       </ul>
+
+      {/* Expanded highlights */}
+      {highlights.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#5a5958" }}>
+            ✨ Your Highlights ({highlights.length})
+          </p>
+          <div className="flex flex-col gap-3">
+            {highlights.map((h) => (
+              <div key={h.id}
+                className="p-4 rounded-xl cursor-pointer transition-all"
+                style={{ background: "#131316", border: `1px solid ${expandedNote?.id === h.id ? "#e05a2b" : "rgba(224,90,43,0.2)"}` }}
+                onClick={() => setExpandedNote(expandedNote?.id === h.id ? null : h)}>
+                <p className="text-xs font-semibold mb-2" style={{ color: "#e05a2b" }}>
+                  "{h.text.slice(0, 80)}{h.text.length > 80 ? "..." : ""}"
+                </p>
+                {expandedNote?.id === h.id && (
+                  <div className="animate-fade-in">
+                    <div className="px-3 py-2 rounded-lg mb-2"
+                      style={{ background: "rgba(224,90,43,0.05)", border: "1px solid rgba(224,90,43,0.1)" }}>
+                      <p className="text-xs font-bold mb-1" style={{ color: "#e05a2b" }}>💡 Key Insight</p>
+                      <p className="text-xs" style={{ color: "#f0efe8" }}>{h.keyInsight}</p>
+                    </div>
+                    <p className="text-xs leading-relaxed mb-2" style={{ color: "#9b9a96", lineHeight: 1.7 }}>{h.expandedNote}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {h.relatedPoints?.map((rp, i) => (
+                        <span key={i} className="text-xs px-2 py-1 rounded-lg"
+                          style={{ background: "#1a1a1f", border: "1px solid rgba(255,255,255,0.07)", color: "#9b9a96" }}>
+                          • {rp}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Export bar */}
       <div className="flex flex-wrap gap-2 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         {[["⬇ Export PDF", exportPDF, true], ["📋 Copy Markdown", copyMarkdown, false], ["🔗 Notion", () => showToast("Coming soon!"), false], ["📚 Anki", () => showToast("Coming soon!"), false]].map(([label, fn, accent]) => (
-          <button key={label} onClick={fn} className="text-xs font-semibold px-3 py-2 rounded-lg"
+          <button key={label} onClick={fn}
+            className="text-xs font-semibold px-3 py-2 rounded-lg"
             style={{ border: `1px solid ${accent ? "rgba(224,90,43,0.3)" : "rgba(255,255,255,0.07)"}`, background: "transparent", color: accent ? "#e05a2b" : "#9b9a96", cursor: "pointer" }}>
             {label}
           </button>
