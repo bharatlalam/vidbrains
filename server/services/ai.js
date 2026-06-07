@@ -30,11 +30,11 @@ async function safeParseJSON(raw, client) {
     console.warn("[ai] JSON parse failed, attempting repair...");
     const repair = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 2500,
+      max_tokens: 4096,
       temperature: 0,
       messages: [{
         role: "user",
-        content: `Fix this broken JSON. Return ONLY the valid JSON object, nothing else, no markdown:\n\n${clean.slice(0, 3000)}`,
+        content: `Fix this broken JSON. Return ONLY the valid JSON object, nothing else, no markdown:\n\n${clean.slice(0, 4000)}`,
       }],
     });
     const fixed = repair.choices[0].message.content
@@ -48,85 +48,88 @@ async function safeParseJSON(raw, client) {
 
 async function analyzeVideo({ videoId, url, fullText, duration, metadata, language = "en" }) {
   const langName = LANGUAGE_NAMES[language] || "English";
-  const videoContext = fullText
-    ? fullText.slice(0, 1500)
-    : `Infer topic from URL: ${url}`;
-
+  const videoContext = fullText || `Infer topic from URL: ${url}`;
   const videoDuration = metadata?.duration || null;
 
-  const prompt = `You are VidBrain AI. Analyze this YouTube video and generate a detailed analysis.
+  const prompt = `You are VidBrain AI. Analyze this YouTube video carefully and generate a rich detailed analysis.
 
-VIDEO INFO:
+VIDEO METADATA:
 ${videoContext}
-${videoDuration ? `Duration: ${videoDuration}` : ""}
+${videoDuration ? `Real video duration: ${videoDuration}` : ""}
 
 OUTPUT LANGUAGE: ${langName}
-CRITICAL RULES:
-- Return ONLY raw valid JSON. No markdown. No backticks. No trailing commas.
-- For summary and keyPoints and qa answers — write detailed long content
-- For ALL OTHER fields like titles, chapter titles, descriptions, flashcard terms, mindmap labels — keep them SHORT under 15 words
-- No newlines inside any string value
-- Use only straight double quotes
+Write ALL text fields in ${langName}.
+
+IMPORTANT RULES:
+- Summary MUST be 6-8 detailed sentences — this is the most important field
+- Key points MUST have 7 items each with a full detailed explanation
+- Q&A MUST have 7 questions each with 3-4 sentence detailed answers
+- Keep JSON valid — no unescaped quotes, no newlines inside strings, no trailing commas
+- Chapters must have real timestamps based on video duration — never use "not available"
+
+Return ONLY raw valid JSON, no markdown, no backticks:
 
 {
-  "title": "exact video title",
-  "channel": "channel name",
-  "duration": "mm:ss",
-  "views": "14K views",
-  "year": "2024",
+  "title": "exact video title in ${langName}",
+  "channel": "exact channel name",
+  "duration": "exact duration mm:ss",
+  "views": "view count like 14K views",
+  "year": "year published",
   "thumbnail": "https://img.youtube.com/vi/${videoId}/mqdefault.jpg",
-  "summary": "Write a very detailed and comprehensive paragraph of 6-8 sentences in ${langName}. Cover the main topic thoroughly, explain all key concepts discussed, mention specific examples or tips given in the video, describe who this video is for, and explain exactly what the viewer will learn. Make this the most informative part of the entire analysis.",
+  "summary": "Write a very comprehensive 6-8 sentence paragraph in ${langName} covering: the main topic of the video, all key concepts discussed, specific examples and tips mentioned, who this video is best for, what the viewer will learn, and why this video is valuable. Be very detailed and specific — this is the most important field.",
   "keyPoints": [
-    "Detailed insight with full explanation of this concept from the video in ${langName}",
-    "Detailed insight with full explanation in ${langName}",
-    "Detailed insight with full explanation in ${langName}",
-    "Detailed insight with full explanation in ${langName}",
-    "Detailed insight with full explanation in ${langName}",
-    "Detailed insight with full explanation in ${langName}",
-    "Detailed insight with full explanation in ${langName}"
+    "Detailed insight 1 with full explanation in ${langName}",
+    "Detailed insight 2 with full explanation",
+    "Detailed insight 3 with full explanation",
+    "Detailed insight 4 with full explanation",
+    "Detailed insight 5 with full explanation",
+    "Detailed insight 6 with full explanation",
+    "Detailed insight 7 with full explanation"
   ],
   "chapters": [
-    {"timestamp": "0:00", "title": "short chapter title", "description": "short description"},
-    {"timestamp": "3:00", "title": "short chapter title", "description": "short description"},
-    {"timestamp": "7:00", "title": "short chapter title", "description": "short description"},
-    {"timestamp": "12:00", "title": "short chapter title", "description": "short description"},
-    {"timestamp": "17:00", "title": "short chapter title", "description": "short description"}
+    {"timestamp": "0:00", "title": "chapter title", "description": "what this section covers"},
+    {"timestamp": "3:00", "title": "chapter title", "description": "what this section covers"},
+    {"timestamp": "7:00", "title": "chapter title", "description": "what this section covers"},
+    {"timestamp": "12:00", "title": "chapter title", "description": "what this section covers"},
+    {"timestamp": "17:00", "title": "chapter title", "description": "what this section covers"}
   ],
   "qa": [
-    {"question": "specific question about this video?", "answer": "Write a detailed 3-4 sentence answer with examples from the video in ${langName}."},
+    {"question": "specific question about this video in ${langName}?", "answer": "Write a detailed 3-4 sentence answer with specific examples from the video in ${langName}."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
+    {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
     {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
     {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
     {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."},
     {"question": "specific question?", "answer": "detailed 3-4 sentence answer with examples."}
   ],
   "flashcards": [
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."},
-    {"term": "short term", "definition": "clear definition under 20 words."}
+    {"term": "Key Term 1", "definition": "clear precise definition from video."},
+    {"term": "Key Term 2", "definition": "clear precise definition."},
+    {"term": "Key Term 3", "definition": "clear precise definition."},
+    {"term": "Key Term 4", "definition": "clear precise definition."},
+    {"term": "Key Term 5", "definition": "clear precise definition."},
+    {"term": "Key Term 6", "definition": "clear precise definition."},
+    {"term": "Key Term 7", "definition": "clear precise definition."},
+    {"term": "Key Term 8", "definition": "clear precise definition."}
   ],
   "mindmap": {
     "center": "core topic",
     "branches": [
-      {"label": "branch 1", "children": ["sub1", "sub2", "sub3"]},
-      {"label": "branch 2", "children": ["sub1", "sub2", "sub3"]},
-      {"label": "branch 3", "children": ["sub1", "sub2"]},
-      {"label": "branch 4", "children": ["sub1", "sub2", "sub3"]},
-      {"label": "branch 5", "children": ["sub1", "sub2"]}
+      {"label": "Branch 1", "children": ["sub1", "sub2", "sub3"]},
+      {"label": "Branch 2", "children": ["sub1", "sub2", "sub3"]},
+      {"label": "Branch 3", "children": ["sub1", "sub2"]},
+      {"label": "Branch 4", "children": ["sub1", "sub2", "sub3"]},
+      {"label": "Branch 5", "children": ["sub1", "sub2"]}
     ]
   },
-  "suggestedQuestions": ["question 1?", "question 2?", "question 3?"],
-  "context": "3-4 sentences summarizing the full video content accurately in ${langName}."
+  "suggestedQuestions": ["specific question 1?", "specific question 2?", "specific question 3?"],
+  "context": "Detailed 3-4 sentence paragraph summarizing the full video content accurately in ${langName}."
 }`;
 
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
-    max_tokens: 3500,
-    temperature: 0.2,
+    max_tokens: 4096,
+    temperature: 0.3,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -141,7 +144,7 @@ async function chatWithVideo({ videoTitle, channel, context, history, question, 
   const messages = [
     {
       role: "system",
-      content: `You are VidBrain, expert assistant for "${videoTitle}" by ${channel}. Context: ${context}. Answer in ${langName}. Be detailed and specific.`,
+      content: `You are VidBrain, expert assistant for the YouTube video "${videoTitle}" by ${channel}. Context: ${context}. Answer ALL questions in ${langName} only. Give detailed comprehensive answers with examples. Be specific and thorough.`,
     },
     ...history,
     { role: "user", content: question },
@@ -149,7 +152,7 @@ async function chatWithVideo({ videoTitle, channel, context, history, question, 
 
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
-    max_tokens: 1024,
+    max_tokens: 2048,
     messages,
   });
 
