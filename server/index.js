@@ -8,6 +8,8 @@ const chatRouter = require("./routes/chat");
 const historyRouter = require("./routes/history");
 const quizRouter = require("./routes/quiz");
 const compareRouter = require("./routes/compare");
+const tutorRouter = require("./routes/tutor");
+const conceptRouter = require("./routes/concept");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,6 +32,8 @@ app.use("/api/chat", chatRouter);
 app.use("/api/history", historyRouter);
 app.use("/api/quiz", quizRouter);
 app.use("/api/compare", compareRouter);
+app.use("/api/tutor", tutorRouter);
+app.use("/api/concept", conceptRouter);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", version: "1.0.0" });
@@ -40,12 +44,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal server error" });
 });
 
-// Start server FIRST then connect DB
 app.listen(PORT, () => {
   console.log(`\n🧠 VidBrain server → http://localhost:${PORT}`);
   console.log(`   API key: ${process.env.GROQ_API_KEY ? "✓ loaded" : "✗ MISSING"}`);
   console.log(`   Database: ${process.env.DATABASE_URL ? "✓ connected" : "✗ MISSING"}\n`);
 });
 
-// Connect DB after server starts
 initDB().catch((e) => console.error("[db] init error:", e.message));

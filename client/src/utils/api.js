@@ -36,6 +36,21 @@ export async function generateQuiz({ title, context, keyPoints }) {
   return data.data;
 }
 
+export async function generateLesson({ title, summary, keyPoints, context, language }) {
+  const { data } = await api.post("/tutor/lesson", { title, summary, keyPoints, context, language });
+  return data.data;
+}
+
+export async function evaluateAnswer({ question, correctAnswer, studentAnswer, concept, language }) {
+  const { data } = await api.post("/tutor/evaluate", { question, correctAnswer, studentAnswer, concept, language });
+  return data.data;
+}
+
+export async function generateConceptGraph({ title, summary, keyPoints, context }) {
+  const { data } = await api.post("/concept", { title, summary, keyPoints, context });
+  return data.data;
+}
+
 export async function getSharedAnalysis(shareId) {
   const { data } = await api.get(`/analyze/share/${shareId}`);
   return data.data;
