@@ -60,7 +60,10 @@ export default function App() {
       />
       <main className="max-w-4xl mx-auto px-4 pb-24">
         {showDashboard ? (
-          <DashboardView onBack={() => setShowDashboard(false)} onReanalyze={(topic) => { closeAll(); analyze(topic.url, topic.language); }} />
+          <DashboardView
+            onBack={() => setShowDashboard(false)}
+            onReanalyze={(topic) => { closeAll(); analyze(topic.url, topic.language); }}
+          />
         ) : showCompare ? (
           <CompareView onBack={() => setShowCompare(false)} />
         ) : showHistory ? (
