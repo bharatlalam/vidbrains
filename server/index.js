@@ -12,6 +12,8 @@ const tutorRouter = require("./routes/tutor");
 const conceptRouter = require("./routes/concept");
 const highlightsRouter = require("./routes/highlights");
 const dashboardRouter = require("./routes/dashboard");
+const notesRouter = require("./routes/notes");
+const communityRouter = require("./routes/community");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +40,8 @@ app.use("/api/tutor", tutorRouter);
 app.use("/api/concept", conceptRouter);
 app.use("/api/highlights", highlightsRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/notes", notesRouter);
+app.use("/api/community", communityRouter);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", version: "1.0.0" });

@@ -10,6 +10,8 @@ import ReadingPanel      from "./panels/ReadingPanel";
 import ChatPanel         from "./panels/ChatPanel";
 import TutorPanel        from "./panels/TutorPanel";
 import ConceptGraphPanel from "./panels/ConceptGraphPanel";
+import NotesPanel        from "./panels/NotesPanel";
+import CommunityPanel    from "./panels/CommunityPanel";
 
 const TABS = [
   { id: "summary",    label: "Summary",    icon: "📋" },
@@ -20,6 +22,8 @@ const TABS = [
   { id: "concept",    label: "Concepts",   icon: "🕸️" },
   { id: "quiz",       label: "Quiz",       icon: "🧠" },
   { id: "tutor",      label: "AI Tutor",   icon: "🧑‍🏫" },
+  { id: "notes",      label: "Notes",      icon: "📝" },
+  { id: "community",  label: "Community",  icon: "🌟" },
   { id: "podcast",    label: "Podcast",    icon: "🎙️" },
   { id: "reading",    label: "Read",       icon: "📖" },
   { id: "chat",       label: "Chat",       icon: "💬" },
@@ -43,6 +47,8 @@ export default function Results({ videoData, onReset, showToast }) {
     concept:    <ConceptGraphPanel data={videoData} />,
     quiz:       <QuizPanel         data={videoData} showToast={showToast} />,
     tutor:      <TutorPanel        data={videoData} />,
+    notes:      <NotesPanel        data={videoData} />,
+    community:  <CommunityPanel    data={videoData} />,
     podcast:    <PodcastPanel      data={videoData} />,
     reading:    <ReadingPanel      data={videoData} />,
     chat:       <ChatPanel         data={videoData} />,

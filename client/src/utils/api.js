@@ -79,3 +79,33 @@ export async function saveQuizScore({ videoTitle, score, total }) {
     total,
   });
 }
+
+// Notes
+export async function getNotes(shareId) {
+  const { data } = await api.get(`/notes/${shareId}?sessionId=${getSessionId()}`);
+  return data.data;
+}
+
+export async function saveNotes({ shareId, videoTitle, content }) {
+  await api.post("/notes", { shareId, sessionId: getSessionId(), videoTitle, content });
+}
+
+export async function deleteNotes(shareId) {
+  await api.delete(`/notes/${shareId}?sessionId=${getSessionId()}`);
+}
+
+// Community highlights
+export async function getCommunityHighlights(videoId) {
+  const { data } = await api.get(`/community/${videoId}?sessionId=${getSessionId()}`);
+  return data.data;
+}
+
+export async function addCommunityHighlight({ videoId, videoTitle, text }) {
+  const { data } = await api.post("/community/highlight", {
+    videoId,
+    videoTitle,
+    text,
+    sessionId: getSessionId(),
+  });
+  return data;
+}
