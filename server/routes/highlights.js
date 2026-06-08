@@ -4,25 +4,28 @@ const Groq = require("groq-sdk");
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// POST /api/highlights/expand — expand a highlighted sentence
+const LANGUAGE_NAMES = {
+  en: "English", te: "Telugu", hi: "Hindi",
+  ta: "Tamil", es: "Spanish", fr: "French", ja: "Japanese",
+};
+
 router.post("/expand", async (req, res) => {
   const { text, videoTitle, context, language = "en" } = req.body;
   if (!text) return res.status(400).json({ error: "text is required" });
 
-  const prompt = `You are VidBrain AI. The user highlighted this sentence from a video analysis:
+  const langName = LANGUAGE_NAMES[language] || "English";
 
-"${text}"
+  const prompt = `You are VidBrain AI. The user highlighted this text from a video analysis. Write ALL output in ${langName}.
 
+Highlighted text: "${text}"
 Video: ${videoTitle}
 Context: ${context}
 
-Expand this into detailed notes in ${language === "te" ? "Telugu" : language === "hi" ? "Hindi" : language === "ta" ? "Tamil" : language === "es" ? "Spanish" : language === "fr" ? "French" : language === "ja" ? "Japanese" : "English"}.
-
 Return ONLY raw valid JSON, no markdown:
 {
-  "expandedNote": "Write 4-5 detailed sentences expanding on this highlighted text. Explain it deeply, add examples, context from the video, and why it matters.",
-  "keyInsight": "One sentence capturing the core insight of this highlight.",
-  "relatedPoints": ["related point 1", "related point 2", "related point 3"]
+  "expandedNote": "Write 4-5 detailed sentences in ${langName} expanding on this highlighted text with examples and context.",
+  "keyInsight": "One sentence in ${langName} capturing the core insight.",
+  "relatedPoints": ["related point 1 in ${langName}", "related point 2 in ${langName}", "related point 3 in ${langName}"]
 }`;
 
   try {

@@ -13,12 +13,19 @@ export default function FlashcardsPanel({ data, showToast }) {
 
   function shuffle() {
     const s = [...cards];
-    for (let i = s.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; }
+    for (let i = s.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [s[i], s[j]] = [s[j], s[i]];
+    }
     setCards(s); setIndex(0); setFlipped(false); setDone(new Set());
     showToast("Cards shuffled!");
   }
 
-  function markGot() { setDone((d) => new Set([...d, index])); showToast("Marked as learned ✓"); nav(1); }
+  function markGot() {
+    setDone((d) => new Set([...d, index]));
+    showToast("Marked as learned ✓");
+    nav(1);
+  }
 
   return (
     <div>
@@ -28,7 +35,8 @@ export default function FlashcardsPanel({ data, showToast }) {
         </p>
         <div className="flex gap-2">
           {[["← Prev", () => nav(-1)], ["⇌ Shuffle", shuffle], ["Next →", () => nav(1)]].map(([label, fn]) => (
-            <button key={label} onClick={fn} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+            <button key={label} onClick={fn}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg"
               style={{ border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#9b9a96", cursor: "pointer" }}>
               {label}
             </button>
@@ -36,17 +44,28 @@ export default function FlashcardsPanel({ data, showToast }) {
         </div>
       </div>
 
-      <div style={{ perspective: "1000px", height: 220, marginBottom: 16 }} onClick={() => setFlipped((f) => !f)}>
-        <div style={{ width: "100%", height: "100%", transformStyle: "preserve-3d", transition: "transform 0.5s cubic-bezier(0.4,0,0.2,1)", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)", position: "relative", cursor: "pointer" }}>
+      <div style={{ perspective: "1000px", height: 220, marginBottom: 16 }}
+        onClick={() => setFlipped((f) => !f)}>
+        <div style={{
+          width: "100%", height: "100%",
+          transformStyle: "preserve-3d",
+          transition: "transform 0.5s cubic-bezier(0.4,0,0.2,1)",
+          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          position: "relative", cursor: "pointer",
+        }}>
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl p-8 text-center"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "#131316", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#e05a2b" }}>Term</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#e05a2b" }}>
+              {data.language && data.language !== "en" ? `Term (${data.language.toUpperCase()})` : "Term"}
+            </p>
             <p className="text-2xl font-black" style={{ letterSpacing: "-0.5px", lineHeight: 1.3 }}>{card?.term}</p>
             <p className="text-xs absolute bottom-4" style={{ color: "#5a5958" }}>click to reveal</p>
           </div>
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl p-8 text-center"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "#1a1a1f", border: "1px solid #e05a2b" }}>
-            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#3cb87a" }}>Definition</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#3cb87a" }}>
+              {data.language && data.language !== "en" ? `Definition (${data.language.toUpperCase()})` : "Definition"}
+            </p>
             <p className="text-sm leading-relaxed" style={{ color: "#9b9a96", lineHeight: "1.7" }}>{card?.definition}</p>
             <p className="text-xs absolute bottom-4" style={{ color: "#5a5958" }}>click to flip back</p>
           </div>
@@ -61,10 +80,16 @@ export default function FlashcardsPanel({ data, showToast }) {
       </div>
 
       <div className="flex gap-2 justify-center">
-        <button onClick={() => nav(1)} className="text-xs font-semibold px-4 py-2 rounded-lg"
-          style={{ border: "1px solid rgba(224,90,43,0.3)", background: "transparent", color: "#e05a2b", cursor: "pointer" }}>😅 Hard</button>
-        <button onClick={markGot} className="text-xs font-semibold px-4 py-2 rounded-lg"
-          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#9b9a96", cursor: "pointer" }}>✓ Got it</button>
+        <button onClick={() => nav(1)}
+          className="text-xs font-semibold px-4 py-2 rounded-lg"
+          style={{ border: "1px solid rgba(224,90,43,0.3)", background: "transparent", color: "#e05a2b", cursor: "pointer" }}>
+          😅 Hard
+        </button>
+        <button onClick={markGot}
+          className="text-xs font-semibold px-4 py-2 rounded-lg"
+          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#9b9a96", cursor: "pointer" }}>
+          ✓ Got it
+        </button>
       </div>
     </div>
   );

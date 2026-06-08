@@ -9,6 +9,8 @@ export default function ConceptGraphPanel({ data }) {
   const [selectedNode, setSelectedNode] = useState(null);
   const [generated, setGenerated] = useState(false);
 
+  const language = data.language || "en";
+
   async function generate() {
     setLoading(true);
     try {
@@ -17,6 +19,7 @@ export default function ConceptGraphPanel({ data }) {
         summary: data.summary,
         keyPoints: data.keyPoints,
         context: data.context,
+        language,
       });
       setGraph(result);
       setGenerated(true);
@@ -36,9 +39,15 @@ export default function ConceptGraphPanel({ data }) {
     <div className="text-center py-10">
       <div style={{ fontSize: 56, marginBottom: 12 }}>🕸️</div>
       <h2 className="text-xl font-black mb-2" style={{ letterSpacing: "-0.5px" }}>Concept Graph</h2>
-      <p className="text-sm mb-8 max-w-sm mx-auto leading-relaxed" style={{ color: "#9b9a96" }}>
-        See how all concepts in this video connect to each other. Click any node to learn more about that concept.
+      <p className="text-sm mb-4 max-w-sm mx-auto leading-relaxed" style={{ color: "#9b9a96" }}>
+        See how all concepts in this video connect to each other.
       </p>
+      {language !== "en" && (
+        <p className="text-xs mb-6 px-3 py-1.5 rounded-full inline-block"
+          style={{ background: "rgba(224,90,43,0.1)", border: "1px solid rgba(224,90,43,0.25)", color: "#e05a2b" }}>
+          🌐 Graph will be in {language.toUpperCase()}
+        </p>
+      )}
       <button onClick={generate} disabled={loading}
         className="px-8 py-3 rounded-xl text-sm font-bold text-white"
         style={{ background: "#e05a2b", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
@@ -68,7 +77,6 @@ export default function ConceptGraphPanel({ data }) {
         </button>
       </div>
 
-      {/* Legend */}
       <div className="flex gap-3 mb-3 flex-wrap">
         {[
           { color: "#e05a2b", label: "Core Topic" },
@@ -90,7 +98,6 @@ export default function ConceptGraphPanel({ data }) {
         borderRadius: 16,
       }} />
 
-      {/* Selected node info */}
       {selectedNode && (
         <div className="mt-3 p-4 rounded-xl animate-fade-in"
           style={{ background: "#131316", border: `1px solid ${selectedNode.color}40` }}>
@@ -126,17 +133,14 @@ function drawGraph(graph, svgEl, setSelectedNode) {
     .force("collision", d3.forceCollide(50));
 
   const g = d3Svg.append("g");
-
   const zoom = d3.zoom().scaleExtent([0.4, 2.5]).on("zoom", (e) => g.attr("transform", e.transform));
   d3Svg.call(zoom);
 
-  // Draw edges
   const link = g.append("g").selectAll("line")
     .data(links).join("line")
     .attr("stroke", "rgba(255,255,255,0.1)")
     .attr("stroke-width", 1.5);
 
-  // Edge labels
   const edgeLabel = g.append("g").selectAll("text")
     .data(links).join("text")
     .attr("text-anchor", "middle")
@@ -145,7 +149,6 @@ function drawGraph(graph, svgEl, setSelectedNode) {
     .attr("font-family", "Syne, sans-serif")
     .text((d) => d.label);
 
-  // Draw nodes
   const node = g.append("g").selectAll("g")
     .data(nodes).join("g")
     .style("cursor", "pointer")
@@ -184,11 +187,9 @@ function drawGraph(graph, svgEl, setSelectedNode) {
     link
       .attr("x1", (d) => d.source.x).attr("y1", (d) => d.source.y)
       .attr("x2", (d) => d.target.x).attr("y2", (d) => d.target.y);
-
     edgeLabel
       .attr("x", (d) => (d.source.x + d.target.x) / 2)
       .attr("y", (d) => (d.source.y + d.target.y) / 2);
-
     node.attr("transform", (d) => `translate(${d.x},${d.y})`);
   });
 }

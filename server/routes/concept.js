@@ -4,84 +4,40 @@ const Groq = require("groq-sdk");
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// POST /api/concept — generate concept graph
+const LANGUAGE_NAMES = {
+  en: "English", te: "Telugu", hi: "Hindi",
+  ta: "Tamil", es: "Spanish", fr: "French", ja: "Japanese",
+};
+
 router.post("/", async (req, res) => {
-  const { title, summary, keyPoints, context } = req.body;
+  const { title, summary, keyPoints, context, language = "en" } = req.body;
   if (!context) return res.status(400).json({ error: "context is required" });
 
-  const prompt = `You are VidBrain AI. Generate a concept graph for this YouTube video showing how all concepts connect.
+  const langName = LANGUAGE_NAMES[language] || "English";
+
+  const prompt = `You are VidBrain AI. Generate a concept graph for this YouTube video. Write ALL labels and descriptions in ${langName}.
 
 Video: ${title}
 Context: ${context}
 Key Points: ${keyPoints?.join(", ")}
 
-Create a concept graph with a central concept and related nodes. Each node has connections to other nodes showing relationships.
-
 Return ONLY raw valid JSON, no markdown, no backticks, no trailing commas:
 {
   "centralConcept": {
     "id": "root",
-    "label": "main topic of video (3 words max)",
-    "description": "one sentence about this concept",
+    "label": "main topic in ${langName} (3 words max)",
+    "description": "one sentence in ${langName}",
     "color": "#e05a2b"
   },
   "nodes": [
-    {
-      "id": "n1",
-      "label": "concept name (2-3 words)",
-      "description": "one sentence explaining this concept from the video",
-      "category": "core",
-      "color": "#4a9eff"
-    },
-    {
-      "id": "n2",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "core",
-      "color": "#4a9eff"
-    },
-    {
-      "id": "n3",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "supporting",
-      "color": "#3cb87a"
-    },
-    {
-      "id": "n4",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "supporting",
-      "color": "#3cb87a"
-    },
-    {
-      "id": "n5",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "supporting",
-      "color": "#9b6dff"
-    },
-    {
-      "id": "n6",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "example",
-      "color": "#9b6dff"
-    },
-    {
-      "id": "n7",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "example",
-      "color": "#f0a030"
-    },
-    {
-      "id": "n8",
-      "label": "concept name",
-      "description": "one sentence explanation",
-      "category": "example",
-      "color": "#f0a030"
-    }
+    {"id": "n1", "label": "concept in ${langName} (2-3 words)", "description": "one sentence in ${langName}", "category": "core", "color": "#4a9eff"},
+    {"id": "n2", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "core", "color": "#4a9eff"},
+    {"id": "n3", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "supporting", "color": "#3cb87a"},
+    {"id": "n4", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "supporting", "color": "#3cb87a"},
+    {"id": "n5", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "supporting", "color": "#9b6dff"},
+    {"id": "n6", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "example", "color": "#9b6dff"},
+    {"id": "n7", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "example", "color": "#f0a030"},
+    {"id": "n8", "label": "concept in ${langName}", "description": "one sentence in ${langName}", "category": "example", "color": "#f0a030"}
   ],
   "edges": [
     {"from": "root", "to": "n1", "label": "includes"},

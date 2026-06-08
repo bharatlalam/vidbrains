@@ -55,7 +55,10 @@ export async function expandHighlight({ text, videoTitle, context, language }) {
   const { data } = await api.post("/highlights/expand", { text, videoTitle, context, language });
   return data.data;
 }
-
+export async function generateConceptGraph({ title, summary, keyPoints, context, language = "en" }) {
+  const { data } = await api.post("/concept", { title, summary, keyPoints, context, language });
+  return data.data;
+}
 export async function getDashboard() {
   const { data } = await api.get(`/dashboard?sessionId=${getSessionId()}`);
   return data.data;
