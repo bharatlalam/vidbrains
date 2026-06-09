@@ -89,6 +89,12 @@ export default function Results({ videoData, onReset, showToast }) {
             style={{ border: "1px solid rgba(224,90,43,0.3)", color: "#e05a2b", background: "transparent", cursor: "pointer" }}>
             🔗 Share
           </button>
+          {/* In the video meta buttons area, add this after Share button */}
+<button onClick={() => showToast("Open Collections from header to save!")}
+  className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
+  style={{ border: "1px solid rgba(155,109,255,0.3)", color: "#9b6dff", background: "transparent", cursor: "pointer" }}>
+  📚 Save
+</button>
           <button onClick={onReset}
             className="text-xs px-3 py-1.5 rounded-lg"
             style={{ border: "1px solid rgba(255,255,255,0.07)", color: "#9b9a96", background: "transparent", cursor: "pointer" }}>

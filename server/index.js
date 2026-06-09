@@ -14,6 +14,8 @@ const highlightsRouter = require("./routes/highlights");
 const dashboardRouter = require("./routes/dashboard");
 const notesRouter = require("./routes/notes");
 const communityRouter = require("./routes/community");
+const collectionsRouter = require("./routes/collections");
+const groupsRouter = require("./routes/groups");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +44,8 @@ app.use("/api/highlights", highlightsRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/community", communityRouter);
+app.use("/api/collections", collectionsRouter);
+app.use("/api/groups", groupsRouter);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", version: "1.0.0" });
