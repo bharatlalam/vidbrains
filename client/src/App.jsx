@@ -59,9 +59,9 @@ export default function App() {
             <HistoryPanel onSelect={handleHistorySelect} />
           </div>
         ) : activeView === "collections" ? (
-          <CollectionsView onBack={closeAll} onReanalyze={(t) => { closeAll(); }} />
+          <CollectionsView onBack={closeAll} onReanalyze={(t) => { closeAll(); analyze(t.url, t.language); }} />
         ) : activeView === "groups" ? (
-          <StudyGroupsView onBack={closeAll} />
+          <StudyGroupsView onBack={closeAll} currentVideo={videoData} />
         ) : status === "idle" || status === "error" ? (
           <Hero onAnalyze={analyze} error={error} />
         ) : status === "loading" ? (
