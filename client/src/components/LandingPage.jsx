@@ -32,7 +32,7 @@ const STEPS = [
   { step: "03", title: "Learn Smarter", desc: "Use 13 features — summaries, flashcards, quizzes, tutor, notes, community and more." },
 ];
 
-export default function LandingPage({ onGetStarted }) {
+export default function LandingPage({ onGetStarted, onSignIn })  {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -59,6 +59,7 @@ export default function LandingPage({ onGetStarted }) {
         background: "rgba(13,13,15,0.85)", backdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
+        
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, fontSize: 18, letterSpacing: "-0.5px" }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: "#e05a2b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🧠</div>
           VidBrain
@@ -71,6 +72,10 @@ export default function LandingPage({ onGetStarted }) {
             style={{ fontSize: 13, fontWeight: 700, padding: "8px 18px", borderRadius: 8, background: "#e05a2b", color: "white", border: "none", cursor: "pointer" }}>
             Try Free →
           </button>
+          <button onClick={onSignIn}
+  style={{ fontSize: 13, fontWeight: 600, padding: "8px 18px", borderRadius: 8, background: "transparent", color: "#9b9a96", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}>
+  Sign In
+</button>
         </div>
       </nav>
 
