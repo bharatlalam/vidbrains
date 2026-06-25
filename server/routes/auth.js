@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 
@@ -52,25 +53,25 @@ router.post("/send-otp", async (req, res) => {
   otpStore.set(email.toLowerCase(), { otp, expiresAt });
 
   try {
-    await transporter.sendMail({
-      from: `"VidBrain" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Your VidBrain OTP",
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d0f;color:#f0efe8;border-radius:16px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
-            <div style="width:36px;height:36px;background:#e05a2b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">🧠</div>
-            <span style="font-size:20px;font-weight:800;">VidBrain</span>
-          </div>
-          <h2 style="font-size:24px;margin-bottom:8px;">Your login code</h2>
-          <p style="color:#9b9a96;margin-bottom:24px;">Enter this code to sign in to VidBrain</p>
-          <div style="background:#1a1a1f;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-            <p style="font-size:40px;font-weight:800;letter-spacing:12px;color:#e05a2b;margin:0;">${otp}</p>
-          </div>
-          <p style="color:#5a5958;font-size:13px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p>
-        </div>
-      `,
-    });
+    await resend.emails.send({
+  from: "VidBrain <onboarding@resend.dev>",
+  to: email,
+  subject: "Your VidBrain OTP",
+  html: `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d0f;color:#f0efe8;border-radius:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+        <div style="width:36px;height:36px;background:#e05a2b;border-radius:10px;font-size:18px;text-align:center;line-height:36px;">🧠</div>
+        <span style="font-size:20px;font-weight:800;">VidBrain</span>
+      </div>
+      <h2 style="font-size:24px;margin-bottom:8px;">Your login code</h2>
+      <p style="color:#9b9a96;margin-bottom:24px;">Enter this code to sign in to VidBrain</p>
+      <div style="background:#1a1a1f;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+        <p style="font-size:40px;font-weight:800;letter-spacing:12px;color:#e05a2b;margin:0;">${otp}</p>
+      </div>
+      <p style="color:#5a5958;font-size:13px;">This code expires in 10 minutes.</p>
+    </div>
+  `,
+});
 
     console.log(`[auth] OTP sent to ${email}`);
     res.json({ success: true, message: "OTP sent successfully" });
