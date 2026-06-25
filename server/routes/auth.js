@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const { Resend } = require("resend");
-const resend = new Resend(process.env.RESEND_API_KEY);
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 
@@ -10,17 +9,9 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// In-memory OTP store (clears on server restart — fine for now)
-const otpStore = new Map();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Email transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const otpStore = new Map();
 
 async function initUsersTable() {
   await pool.query(`
@@ -48,30 +39,28 @@ router.post("/send-otp", async (req, res) => {
   }
 
   const otp = generateOTP();
-  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-
+  const expiresAt = Date.now() + 10 * 60 * 1000;
   otpStore.set(email.toLowerCase(), { otp, expiresAt });
 
   try {
     await resend.emails.send({
-  from: "VidBrain <onboarding@resend.dev>",
-  to: email,
-  subject: "Your VidBrain OTP",
-  html: `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d0f;color:#f0efe8;border-radius:16px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
-        <div style="width:36px;height:36px;background:#e05a2b;border-radius:10px;font-size:18px;text-align:center;line-height:36px;">🧠</div>
-        <span style="font-size:20px;font-weight:800;">VidBrain</span>
-      </div>
-      <h2 style="font-size:24px;margin-bottom:8px;">Your login code</h2>
-      <p style="color:#9b9a96;margin-bottom:24px;">Enter this code to sign in to VidBrain</p>
-      <div style="background:#1a1a1f;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-        <p style="font-size:40px;font-weight:800;letter-spacing:12px;color:#e05a2b;margin:0;">${otp}</p>
-      </div>
-      <p style="color:#5a5958;font-size:13px;">This code expires in 10 minutes.</p>
-    </div>
-  `,
-});
+      from: "VidBrain <onboarding@resend.dev>",
+      to: email,
+      subject: "Your VidBrain OTP",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d0f;color:#f0efe8;border-radius:16px;">
+          <div style="margin-bottom:24px;">
+            <span style="font-size:20px;font-weight:800;">🧠 VidBrain</span>
+          </div>
+          <h2 style="font-size:24px;margin-bottom:8px;">Your login code</h2>
+          <p style="color:#9b9a96;margin-bottom:24px;">Enter this code to sign in to VidBrain</p>
+          <div style="background:#1a1a1f;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+            <p style="font-size:40px;font-weight:800;letter-spacing:12px;color:#e05a2b;margin:0;">${otp}</p>
+          </div>
+          <p style="color:#5a5958;font-size:13px;">This code expires in 10 minutes. If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
 
     console.log(`[auth] OTP sent to ${email}`);
     res.json({ success: true, message: "OTP sent successfully" });
@@ -99,12 +88,10 @@ router.post("/verify-otp", async (req, res) => {
 
   otpStore.delete(email.toLowerCase());
 
-  // Check if user exists
   const existing = await pool.query(`SELECT * FROM users WHERE email = $1`, [email.toLowerCase()]);
   const isNewUser = existing.rows.length === 0;
 
   if (!isNewUser) {
-    // Existing user — login directly
     const user = existing.rows[0];
     await pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
     const token = jwt.sign(
@@ -115,7 +102,6 @@ router.post("/verify-otp", async (req, res) => {
     return res.json({ success: true, token, user: { id: user.id, email: user.email, name: user.name }, isNewUser: false });
   }
 
-  // New user — need name
   res.json({ success: true, isNewUser: true, email: email.toLowerCase() });
 });
 
