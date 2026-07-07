@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 
@@ -9,16 +9,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtp-relay.brevo.com",
-  port: parseInt(process.env.EMAIL_PORT) || 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 const otpStore = new Map();
 
 async function initUsersTable() {
@@ -39,7 +30,6 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// POST /api/auth/send-otp
 router.post("/send-otp", async (req, res) => {
   const { email } = req.body;
   if (!email || !email.includes("@")) {
@@ -51,40 +41,38 @@ router.post("/send-otp", async (req, res) => {
   otpStore.set(email.toLowerCase(), { otp, expiresAt });
 
   try {
-    await transporter.sendMail({
-      from: `"VidBrain" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
-      to: email,
+    const result = await resend.emails.send({
+      from: "VidBrain <onboarding@resend.dev>",
+      to: [email],
       subject: "Your VidBrain OTP",
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d0d0f;color:#f0efe8;border-radius:16px;">
           <div style="margin-bottom:24px;">
-            <span style="font-size:20px;font-weight:800;">🧠 VidBrain</span>
+            <span style="font-size:20px;font-weight:800;color:#f0efe8;">🧠 VidBrain</span>
           </div>
           <h2 style="font-size:24px;margin-bottom:8px;color:#f0efe8;">Your login code</h2>
           <p style="color:#9b9a96;margin-bottom:24px;">Enter this code to sign in to VidBrain</p>
-          <div style="background:#1a1a1f;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-            <p style="font-size:40px;font-weight:800;letter-spacing:12px;color:#e05a2b;margin:0;">${otp}</p>
+          <div style="background:#1a1a1f;border:2px solid #e05a2b;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+            <p style="font-size:48px;font-weight:800;letter-spacing:16px;color:#e05a2b;margin:0;">${otp}</p>
           </div>
           <p style="color:#5a5958;font-size:13px;">This code expires in 10 minutes. If you did not request this, ignore this email.</p>
         </div>
       `,
     });
 
-    console.log(`[auth] OTP sent to ${email}`);
+    console.log(`[auth] OTP sent to ${email}`, result);
     res.json({ success: true, message: "OTP sent successfully" });
   } catch (err) {
-    console.error("[auth] email error:", err.message);
+    console.error("[auth] resend error:", err.message, JSON.stringify(err));
     res.status(500).json({ error: "Failed to send email. Try again." });
   }
 });
 
-// POST /api/auth/verify-otp
 router.post("/verify-otp", async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" });
 
   const stored = otpStore.get(email.toLowerCase());
-
   if (!stored) return res.status(400).json({ error: "No OTP found. Please request a new one." });
   if (Date.now() > stored.expiresAt) {
     otpStore.delete(email.toLowerCase());
@@ -107,18 +95,12 @@ router.post("/verify-otp", async (req, res) => {
       process.env.JWT_SECRET || "vidbrain_secret",
       { expiresIn: "30d" }
     );
-    return res.json({
-      success: true,
-      token,
-      user: { id: user.id, email: user.email, name: user.name },
-      isNewUser: false,
-    });
+    return res.json({ success: true, token, user: { id: user.id, email: user.email, name: user.name }, isNewUser: false });
   }
 
   res.json({ success: true, isNewUser: true, email: email.toLowerCase() });
 });
 
-// POST /api/auth/complete-signup
 router.post("/complete-signup", async (req, res) => {
   const { email, name } = req.body;
   if (!email || !name) return res.status(400).json({ error: "Email and name required" });
@@ -130,30 +112,22 @@ router.post("/complete-signup", async (req, res) => {
        RETURNING *`,
       [email.toLowerCase(), name.trim()]
     );
-
     const user = result.rows[0];
     const token = jwt.sign(
       { userId: user.id, email: user.email, name: user.name },
       process.env.JWT_SECRET || "vidbrain_secret",
       { expiresIn: "30d" }
     );
-
-    res.json({
-      success: true,
-      token,
-      user: { id: user.id, email: user.email, name: user.name },
-    });
+    res.json({ success: true, token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
     console.error("[auth] signup error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/auth/me
 router.get("/me", (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: "No token" });
-
   try {
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "vidbrain_secret");
