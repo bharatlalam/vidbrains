@@ -60,7 +60,7 @@ router.post("/send-otp", async (req, res) => {
       `,
     });
 
-    console.log(`[auth] OTP sent to ${email}`, result);
+    console.log(`[auth] OTP for ${email} is: ${otp}`);
     res.json({ success: true, message: "OTP sent successfully" });
   } catch (err) {
     console.error("[auth] resend error:", err.message, JSON.stringify(err));
