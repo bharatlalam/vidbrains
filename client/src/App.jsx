@@ -27,18 +27,27 @@ export default function App() {
   }
 
   function closeAll() { setActiveView(null); }
-  function handleGetStarted() { setShowLanding(false); closeAll(); }
   function handleReset() { reset(); setShowLanding(true); closeAll(); }
+
   function handleHistorySelect(url, language) {
     closeAll(); setShowLanding(false); analyze(url, language);
   }
 
   function handleAuthSuccess(user) {
     setShowAuthModal(false);
+    setShowLanding(false);
     showToast(`Welcome ${user.name}! 🎉`);
-    if (showLanding) { setShowLanding(false); }
   }
 
+  function handleGetStarted() {
+    if (user) {
+      setShowLanding(false);
+    } else {
+      setShowAuthModal(true);
+    }
+  }
+
+  // Show loading spinner while checking auth
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d0d0f" }}>
       <div className="w-10 h-10 rounded-full animate-spin"
@@ -46,16 +55,32 @@ export default function App() {
     </div>
   );
 
+  // Always show landing page first
   if (showLanding) return (
     <>
-      <LandingPage onGetStarted={handleGetStarted} onSignIn={() => setShowAuthModal(true)} />
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
+      <LandingPage
+        onGetStarted={handleGetStarted}
+        onSignIn={() => setShowAuthModal(true)}
+        user={user}
+      />
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
     </>
   );
 
+  // After sign in — main app
   return (
     <div className="min-h-screen bg-bg-1 text-white font-sans">
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
 
       <Header
         onLogoClick={handleReset}
@@ -70,7 +95,7 @@ export default function App() {
         showCollections={activeView === "collections"}
         showGroups={activeView === "groups"}
         user={user}
-        onLogout={() => { logout(); handleReset(); showToast("Signed out successfully"); }}
+        onLogout={() => { logout(); handleReset(); showToast("Signed out!"); }}
         onSignIn={() => setShowAuthModal(true)}
       />
 
@@ -95,22 +120,6 @@ export default function App() {
           <Results videoData={videoData} onReset={handleReset} showToast={showToast} />
         )}
       </main>
-
-      {/* Sign in nudge for non-logged in users */}
-      {!user && status === "done" && (
-        <div className="fixed bottom-6 left-6 z-40 p-4 rounded-2xl max-w-xs animate-fade-in"
-          style={{ background: "#131316", border: "1px solid rgba(224,90,43,0.3)" }}>
-          <p className="text-xs font-bold mb-1" style={{ color: "#e05a2b" }}>💾 Save your progress</p>
-          <p className="text-xs mb-3" style={{ color: "#9b9a96" }}>
-            Sign in to save collections, notes and history permanently across devices.
-          </p>
-          <button onClick={() => setShowAuthModal(true)}
-            className="w-full py-2 rounded-lg text-xs font-bold text-white"
-            style={{ background: "#e05a2b", border: "none", cursor: "pointer" }}>
-            Sign In Free →
-          </button>
-        </div>
-      )}
 
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl text-sm animate-fade-in"
